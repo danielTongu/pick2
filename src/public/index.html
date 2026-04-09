@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Pick2</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="./styles/index.css" rel="stylesheet">
+    <link href="./styles/card.css" rel="stylesheet">
+</head>
+
+<body>
+<div id="app">
+    <header>
+        <h1>Pick<sub>2</sub></h1>
+        <nav>
+            <a id='home' href='#'>Back to Top</a>
+            <div id='dropdown'>
+                <a href='#guide'>Guide</a>
+                <div id='dropdown-content'>
+                    <a href="#how">Using This App</a>
+                    <a href='#rules'>Game Rules</a>
+                    <a href='#special'>Special Cards</a>
+                    <a href='#scoring'>Scoring</a>
+                </div>
+            </div>
+        </nav>
+        <div class="status closed" id="ws-status-indicator">ws status</div>
+    </header>
+    <main>
+        <section id="views-container">
+            <dl id="lobby-view" class="panel">
+                <dt id="room-registrar">
+                    <h3 id="register-heading">Setup</h3>
+                    <p>create or join a room to play with your friends.</p>
+                    <button class="toggle-button" data-active="create" id="mode-control">
+                        <input checked id="create" name="mode" type="radio" value="create">
+                        <label for="create">CREATE</label>
+                        <input id="join" name="mode" type="radio" value="join">
+                        <label for="join">JOIN</label>
+                    </button>
+                    <form autocomplete="off" id="registrar-form">
+                        <label for="playerName">Player Name</label>
+                        <input id="playerName" name="playerName" placeholder="e.g., Daniel" required type="text"
+                               minlength="2"
+                               maxlength="20"
+                               pattern="[A-Za-z0-9_-]+( [A-Za-z0-9_-]+)*"
+                               title="2–20 characters. Letters, numbers, single spaces, underscores, and hyphens only.">
+                        <label for="roomName" id="roomName-label">Room Name</label>
+                        <input id="roomName" name="roomName" placeholder="e.g., Cozy Cards" required type="text"
+                               minlength="2"
+                               maxlength="20"
+                               pattern="[A-Za-z0-9_-]+( [A-Za-z0-9_-]+)*"
+                               title="2–20 characters. Letters, numbers, single spaces, underscores, and hyphens only.">
+                        <div class="create-only">
+                            <label for="capacity">Room Capacity (2–5)</label>
+                            <input id="capacity" max="5" min="2" name="capacity" type="number" value="4">
+                        </div>
+                        <div class="button-group">
+                            <button id="submit-button" type="submit">SUBMIT</button>
+                            <button class="secondary" type="reset">RESET</button>
+                        </div>
+                    </form>
+                </dt>
+                <dd id="rooms-navigator">
+                    <h3>Available Rooms</h3>
+                    <p>click on a room to observe or join it.</p>
+                    <div id="room-filters">
+                        <input id="filter-name" placeholder="Filter by room name..." type="text">
+                        <select id="filter-status">
+                            <option value="">All Statuses</option>
+                            <!-- statuses auto generated -->
+                        </select>
+                        <label>
+                            <input id="filter-joinable" type="checkbox">
+                            <span> Join</span>
+                        </label>
+                    </div>
+                    <div class="table-wrap">
+                        <table id="room-list" role="grid">
+                            <thead>
+                            <tr>
+                                <th scope="col">Room Name</th>
+                                <th scope="col">Status</th>
+                                <th scope="col">nPlayers</th>
+                                <th scope="col">nViewers</th>
+                                <th scope="col">pCapacity</th>
+                                <th scope="col">Last Active</th>
+                                <th scope="col">Created</th>
+                            </tr>
+                            </thead>
+                            <tbody><!-- rows generated --></tbody>
+                        </table>
+                    </div>
+                </dd>
+            </dl>
+            <dl id="room-view" class="panel">
+                <dt class='button-group' id="room-controls">
+                    <button data-action="exit" id="exit-game-button" title="exit to lobby">Exit</button>
+                    <button data-action="join" id="join-game-button" title="enlist player">Join</button>
+                    <button data-action="invite" id="copy-invite-button" title="copy invite link">Invite</button>
+                </dt>
+                <dd class='table-wrap'>
+                    <table id="room-info" role="grid">
+                        <thead>
+                        <tr>
+                            <th scope='col'>Room Name</th>
+                            <th scope='col'>Status</th>
+                            <th scope='col'>nPlayers</th>
+                            <th scope='col'>nViewers</th>
+                            <th scope="col">pCapacity</th>
+                            <th scope='col'>Last Active</th>
+                            <th scope='col'>Created</th>
+                        </tr>
+                        </thead>
+                        <tbody><!-- dynamic data --></tbody>
+                    </table>
+                </dd>
+                <dd id="game-state">
+                    <div id="my-opponents"><!-- dynamic data --></div>
+                    <div class="card-group" id="discard-pile" title="discard here"><!-- dynamic data--></div>
+                    <dl id="my-player">
+                        <dt id="card-count"></dt>
+                        <dd class="card-group" title="your cards">
+                            <button id='draw-card-button' title="add a card"><span>1</span></button>
+                        </dd>
+                        <dd class='button-group' id="player-controls">
+                            <div id="sort-control">
+                                <label for="sort-key">sort:</label>
+                                <select id="sort-key">
+                                    <option value="none">none</option>
+                                    <option value="score">score</option>
+                                    <option value="suit">suit</option>
+                                    <option value="value">value</option>
+                                </select>
+                            </div>
+                            <button data-action="start" id="start-game-button" title="start the game">Start</button>
+                            <button data-action="pass" id="pass-turn-button" title="skip turn">Pass</button>
+                        </dd>
+                    </dl>
+                </dd>
+            </dl>
+        </section>
+        <section id="guide">
+            <h2 class="header">Guide</h2>
+            <dl class="accordion">
+                <dt id="how">Using This App</dt>
+                <dd id="how-to-play" class="grid-layout">
+                    <dl>
+                        <dt>Register & Join</dt>
+                        <dd class="unordered-list">
+                            <p>If you're already observing a room, click the<em>'Join'</em>button to register as a
+                                player</p>
+                            <p>Otherwise, fill out the <a href="#room-registrar">Player Setup</a> form</p>
+                            <p>Inactive rooms and players will be automatically removed</p>
+                        </dd>
+                    </dl>
+                    <dl>
+                        <dt>Begin Match</dt>
+                        <dd>When opponent exist, click<em>'Start'</em>to begin the match.</dd>
+                    </dl>
+                    <dl>
+                        <dt>Play Card</dt>
+                        <dd><em>Drag and Drop</em>, or <em>double-click</em>a card to play it</dd>
+                    </dl>
+                    <dl>
+                        <dt>Draw Card</dt>
+                        <dd class="unordered-list">
+                            <p>Draw = take the top card from the<em>Draw Pile</em></p>
+                            <p>In this app, click the<em>'+'</em>button to draw a card</p>
+                            <p>The number indicates quantity authorized currently</p>
+                        </dd>
+                    </dl>
+                    <dl>
+                        <dt>Pass PlayersTurn</dt>
+                        <dd class="unordered-list">
+                            <p>Pass = Move to the next player</p>
+                            <p>Passing is only allowed in-game</p>
+                            <p>Click<em>'Pass'</em>if you cannot play</p>
+                        </dd>
+                    </dl>
+                    <dl>
+                        <dt>Exit Room</dt>
+                        <dd>Click<em>'Exit'</em>at any time to leave the current room.</dd>
+                    </dl>
+                </dd>
+
+                <dt id="rules">Game Rules</dt>
+                <dd id="rules-content" class="grid-layout">
+                    <dl>
+                        <dt>Objective</dt>
+                        <dd class="unordered-list">
+                            <p>Be the first to play all your cards</p>
+                            <p>Have the lowest score when the game ends</p>
+                        </dd>
+                    </dl>
+                    <dl>
+                        <dt>Setup</dt>
+                        <dd class="unordered-list">
+                            <p>Each player is dealt<em>seven</em>cards at the start</p>
+                            <p>Remaining cards form the<em>Draw Pile</em></p>
+                            <p>The<em>Top Card</em>from the<em>Draw Pile</em>starts the<em>Discard Pile</em></p>
+                        </dd>
+                    </dl>
+                    <dl>
+                        <dt>Basic Play</dt>
+                        <dd class="unordered-list">
+                            <p>Play a card matching the suit or value of the<em>Top Discard</em></p>
+                            <p>If you can't play, add card(s) from the<em>Draw Pile</em></p>
+                            <p>If you still can't play after adding,<em>Pass</em>your turn</p>
+                        </dd>
+                    </dl>
+                    <dl>
+                        <dt>Winning the Game</dt>
+                        <dd class="unordered-list">
+                            <p>Play your last card to immediately win the round</p>
+                            <p>If the<em>7 of Hearts</em>is played, the game ends and scores are calculated</p>
+                            <p>Player with the<em>lowest</em>total card score wins</p>
+                        </dd>
+                    </dl>
+                </dd>
+
+                <dt id="scoring">Scoring</dt>
+                <dd id='scoring-tables' class="grid-layout">
+                    <table id="regular-table">
+                        <thead>
+                        <tr>
+                            <th>Card</th>
+                            <th>Points</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr>
+                            <td>Number cards (3 – 6, 8 – 10)</td>
+                            <td>Face value</td>
+                        </tr>
+                        <tr>
+                            <td>Seven (except Hearts)</td>
+                            <td>7</td>
+                        </tr>
+                        <tr>
+                            <td>Jack</td>
+                            <td>11</td>
+                        </tr>
+                        <tr>
+                            <td>Queen</td>
+                            <td>12</td>
+                        </tr>
+                        <tr>
+                            <td>King</td>
+                            <td>13</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                    <table id="special-table">
+                        <thead>
+                        <tr>
+                            <th>Card</th>
+                            <th>Points</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr>
+                            <td>Ace (except spades)</td>
+                            <td>15</td>
+                        </tr>
+                        <tr>
+                            <td>Two</td>
+                            <td>20</td>
+                        </tr>
+                        <tr>
+                            <td>Seven of Hearts</td>
+                            <td>25</td>
+                        </tr>
+                        <tr>
+                            <td>Jokers</td>
+                            <td>40</td>
+                        </tr>
+                        <tr>
+                            <td>Ace of Spades</td>
+                            <td>60</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </dd>
+
+                <dt id="special">Special Cards</dt>
+                <dd id="special-cards">
+                    <p>Special cards add strategic twists and turns to every match.
+                        <em>(No special effect on any first or last card played)</em>
+                    </p>
+                    <ul>
+                        <li data-effect='8'>
+                            <div class='card-group'></div>
+                            <dl class="accordion">
+                                <dt>Eight</dt>
+                                <dd class="unordered-list">
+                                    <p>The next player in the sequence is <em>skipped and loses their turn</em>.</p>
+                                    <p>Play continues with any card matching the suit or value of the card.</p>
+                                </dd>
+                            </dl>
+                        </li>
+                        <li data-effect='j'>
+                            <div class='card-group'></div>
+                            <dl class="accordion">
+                                <dt>Jack</dt>
+                                <dd class="unordered-list">
+                                    <p>With two players: Acts as a <em>skip</em> card.</p>
+                                    <p>With 3+ players: <em>Reverses</em> the direction of play.</p>
+                                    <p>Play continues with any card matching the suit or value of the card.</p>
+                                </dd>
+                            </dl>
+                        </li>
+                        <li data-effect='a' id='suit-change-effect'>
+                            <div class='card-group'></div>
+                            <dl class="accordion">
+                                <dt>Ace (except Spades)</dt>
+                                <dd class="unordered-list">
+                                    <p>When played, the next player must <em>choose a suit</em> to change to.</p>
+                                    <p>Play continues with any card matching the chosen suit.</p>
+                                </dd>
+                            </dl>
+                        </li>
+                        <li data-effect='2'>
+                            <div class='card-group'></div>
+                            <dl class="accordion">
+                                <dt>Two</dt>
+                                <dd class="unordered-list">
+                                    <p>When played, the next player must <em>play an equal or higher scoring card</em>,
+                                        or <em>add
+                                            two cards and forfeit their turn</em>.</p>
+                                    <p>Play continues with the same suit as the previous card.</p>
+                                </dd>
+                            </dl>
+                        </li>
+                        <li data-effect='7' id='end-effect'>
+                            <div class='card-group'></div>
+                            <dl class="accordion">
+                                <dt>Seven of Hearts</dt>
+                                <dd class="unordered-list">
+                                    <p>When played, <em>the game ends immediately regardless of how many cards the
+                                        player
+                                        has left</em>.</p>
+                                    <p>Scores are calculated based on remaining cards in all players' hands.</p>
+                                    <p>The player with the lowest total card score wins.</p>
+                                </dd>
+                            </dl>
+                        </li>
+                        <li data-effect='joker'>
+                            <div class='card-group'></div>
+                            <dl class="accordion">
+                                <dt>Joker</dt>
+                                <dd class="unordered-list">
+                                    <p>This is a draw-4 card.</p>
+                                    <p>When played, the next player must <em>play an equal or higher scoring card</em>,
+                                        or
+                                        <em>adds four cards and forfeit their turn</em>.
+                                    </p>
+                                    <p>Play continues with any card after joker.</p>
+                                </dd>
+                            </dl>
+                        </li>
+                        <li data-effect='a' id='block-effect'>
+                            <div class='card-group'></div>
+                            <dl class="accordion">
+                                <dt>Ace of Spades</dt>
+                                <dd class="unordered-list">
+                                    <p>Can be played on any card.</p>
+                                    <p>Blocks the effect of drawing two or four cards.</p>
+                                    <p>Play continues with any card after ace-of-spades.</p>
+                                </dd>
+                            </dl>
+                        </li>
+                    </ul>
+                </dd>
+
+                <dt id="regular">Regular Cards</dt>
+                <dd id='regular-cards'>
+                    <p>Play continues with any card matching the suit or value of a card.</p>
+                    <ul>
+                        <li data-effect='3'>
+                            <div class='card-group'></div>
+                            <p>Three</p>
+                        </li>
+                        <li data-effect='4'>
+                            <div class='card-group'></div>
+                            <p>Four</p>
+                        </li>
+                        <li data-effect='5'>
+                            <div class='card-group'></div>
+                            <p>Five</p>
+                        </li>
+                        <li data-effect='6'>
+                            <div class='card-group'></div>
+                            <p>Six</p>
+                        </li>
+                        <li data-effect='7'>
+                            <div class='card-group'></div>
+                            <p>Seven (except Hearts)</p>
+                        </li>
+                        <li data-effect='9'>
+                            <div class='card-group'></div>
+                            <p>Nine</p>
+                        </li>
+                        <li data-effect='10'>
+                            <div class='card-group'></div>
+                            <p>Ten</p>
+                        </li>
+                        <li data-effect='q'>
+                            <div class='card-group'></div>
+                            <p>Queen</p>
+                        </li>
+                        <li data-effect='k'>
+                            <div class='card-group'></div>
+                            <p>King</p>
+                        </li>
+                    </ul>
+                </dd>
+            </dl>
+        </section>
+        <section id="message-board">
+            <dl id="start-countdown">
+                <dt>Game Starting</dt>
+                <dd><p>0</p></dd>
+                <dd class="button-group">
+                    <button type="submit">ok</button>
+                </dd>
+            </dl>
+            <dl id="custom-alert">
+                <dt>Title</dt>
+                <dd><p>message</p></dd>
+                <dd class="button-group">
+                    <button type="submit">ok</button>
+                </dd>
+            </dl>
+            <dl id="suit-change">
+                <dt>Change Suit</dt>
+                <dd><strong>Hint: </strong>select the most recurring suit</dd>
+                <dd>
+                    <form id="suit-form">
+                        <div>
+                            <input id="suit-hearts" name="suit" required type="radio" value="hearts">
+                            <label for="suit-hearts"></label>
+                        </div>
+                        <div>
+                            <input id="suit-clubs" name="suit" type="radio" value="clubs">
+                            <label for="suit-clubs"></label>
+                        </div>
+                        <div>
+                            <input id="suit-spades" name="suit" type="radio" value="spades">
+                            <label for="suit-spades"></label>
+                        </div>
+                        <div>
+                            <input id="suit-diamonds" name="suit" type="radio" value="diamonds">
+                            <label for="suit-diamonds"></label>
+                        </div>
+                        <div class="button-group">
+                            <button title="briefly view your cards" type="button" class="secondary">Timeout</button>
+                            <button title="send selected suit" type="submit">Send</button>
+                        </div>
+                    </form>
+                </dd>
+            </dl>
+            <dl id="game-end">
+                <dt>Game Over</dt>
+                <dd id="end-msg">🏆 Player 1 won 🏆</dd>
+                <dd>
+                    <table id="end-stats">
+                        <thead>
+                            <tr>
+                                <th>Player</th>
+                                <th>Score</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="winner-row">
+                                <td>Player 1</td>
+                                <td>4</td>
+                            </tr>
+                            <tr>
+                                <td>Player 2</td>
+                                <td>42</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </dd>
+                <dd class="button-group">
+                    <button type="submit">ok</button>
+                </dd>
+            </dl>
+        </section>
+    </main>
+    <footer>
+        <p>Enjoy playing Pick Two!</p>
+        <p><span id="year">2025</span>Pick Two — Created by Daniel T.</p>
+    </footer>
+    <script src="./scripts/Main.js"></script>
+</div>
+</body>
+</html>
