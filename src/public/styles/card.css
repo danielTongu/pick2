@@ -1,0 +1,228 @@
+:root {
+    --card-ratio: calc(9 / 11);
+    --card-height: 115px;
+    --card-width: calc(var(--card-height) * var(--card-ratio));
+
+    /* Card back theme */
+    --line-light: #00000000 48.0%, white 0 52%, #00000000 0;
+    --line-dark: #00000000 01.3%, crimson 0 32%, #00000000 0;
+    --s1: 6px; /* size of small square */
+    --s2: calc(2 * var(--s1)); /* size of large square */
+    --card-background-size: calc(2 * var(--s1)) var(--s1), var(--s1) var(--s1);
+
+    --card-background: linear-gradient(-45deg, var(--line-dark)),
+    linear-gradient(45deg, var(--line-light)),
+    linear-gradient(45deg, var(--line-dark)) calc(var(--s1) / 2) calc(var(--s1) / 2),
+    linear-gradient(-45deg, var(--line-light)) crimson;
+}
+
+.card-group {
+    list-style: none;
+    margin: 0;
+    font-size: 0;
+    white-space: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    background-color: rgba(0, 0, 0, 0.1);
+    text-align: center;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+}
+
+.card-group > .card {
+    position: sticky;
+    left: 0;
+    right: 0;
+    margin: 0 0.5rem;
+}
+
+.card-group#discard-pile {
+    position: relative;
+    min-height: calc(var(--card-height) + 4rem);
+    overflow: hidden;
+    background:  var(--green-low);
+    border: 10px solid var(--green-mid);
+    border-radius: var(--radius-md);
+}
+
+.card-group#discard-pile > ul.card {
+    margin: 0;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.card.dragging {
+    opacity: 0;
+    visibility: hidden;
+}
+
+.card#drag-image {
+    box-shadow: var(--shadow-strong);
+}
+
+.drag-handle {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 30%;
+    cursor: grab;
+    touch-action: none;
+    color: rgba(0, 0, 255, 0.45);
+    transition: background 0.2s ease;
+}
+
+.drag-handle::before {
+    content: '⠿⠿';
+    position: absolute;
+    top: 25%;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 1rem;
+}
+
+/*-------------------------- Card Faces --------------------------*/
+
+.card {
+    list-style: none;
+    margin: 0;
+    padding:0;
+
+    display: inline-block;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    scroll-snap-align: center;
+
+    line-height: 1; /* Removes built-in vertical padding */
+    height: var(--card-height);
+    width: var(--card-width);
+
+    border: 1px solid #000;
+    border-radius: 8px;
+    background: var(--card-background);
+    background-size: var(--card-background-size);
+    color: white;
+}
+
+.card.back > [data-suit] {
+    display: none;
+}
+
+/* Front face */
+[data-suit] {
+    position: absolute;
+    height:100%;
+    left:0;
+    right:0;
+    padding: 0.5rem;
+    font-size: 1.2rem;
+    color: black;
+    background: ghostwhite;
+    text-transform: uppercase;
+}
+
+/* Red color grouping */
+[data-suit='hearts'],
+[data-suit='diamonds'],
+[data-suit='red'] {
+    color: crimson;
+}
+
+/* Center suit symbol */
+[data-suit] span {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 4rem;
+}
+
+[data-value='joker'] span {
+    transform: translate(-50%, -61%);
+    font-size: 80px;
+}
+
+/* Suit symbols */
+[data-value='joker'] span::before {
+    content: '\1f0df';
+}
+
+[data-suit='hearts'] span::before {
+    content: '\2665';
+}
+
+[data-suit='diamonds'] span::before {
+    content: '\2666';
+}
+
+[data-suit='clubs'] span::before {
+    content: '\2663';
+}
+
+[data-suit='spades'] span::before {
+    content: '\2660';
+}
+
+/* Corner Value + Suit */
+[data-suit]::before {
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    white-space: pre;
+    line-height: 20px;
+    font-weight: bold;
+}
+
+[data-suit]::after {
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    transform: rotate(180deg);
+    white-space: pre;
+    line-height: 20px;
+    font-weight: bold;
+}
+
+[data-value='joker']::before {
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+[data-value='joker']::after {
+    bottom: 50%;
+    transform: rotate(180deg) translateY(-50%);
+}
+
+/* Normal cards */
+[data-suit='hearts']::before,
+[data-suit='hearts']::after {
+    content: attr(data-value) "\A\2665";
+}
+
+[data-suit='diamonds']::before,
+[data-suit='diamonds']::after {
+    content: attr(data-value) "\A\2666";
+}
+
+[data-suit='clubs']::before,
+[data-suit='clubs']::after {
+    content: attr(data-value) '\A\2663';
+}
+
+[data-suit='spades']::before,
+[data-suit='spades']::after {
+    content: attr(data-value) '\A\2660';
+}
+
+/* Joker corners (vertical text) */
+[data-value='joker']::before,
+[data-value='joker']::after {
+    content: attr(data-value);
+    writing-mode: vertical-rl;
+    text-orientation: upright;
+    font-weight: bold;
+    font-size: medium;
+}
