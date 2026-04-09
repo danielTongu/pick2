@@ -1,0 +1,1090 @@
+:root {
+    --transition: all 0.3s ease;
+    --transition-fast: all 0.15s ease;
+
+    --gray-text: #8e8e93;
+    --gray-light: #e5e5ea;
+    --gray-bg: #f2f2f7;
+    --pale-high: #EDBB99;
+    --pale-high-light: #f8d9c0;
+    --blue-high: #007aff;
+    --blue-low: #0051d4;
+    --green-high: #34c759;
+    --green-mid: #0b5345;
+    --green-low: #09463a;
+    --green-fade: #0b53452d;
+    --white-fade: #FFFFFF14;
+    --black-fade: #00000014;
+    --dark-bg: #121212;
+    --darker-bg: #0a0a0a;
+
+    /* Sizing */
+    --radius-sm: 8px;
+    --radius-md: 14px;
+    --radius-lg: 20px;
+
+    /* Shadows */
+    --shadow-soft: 0 4px 12px rgba(0, 0, 0, 0.08);
+    --shadow-medium: 0 6px 18px rgba(0, 0, 0, 0.15);
+    --shadow-strong: 0 8px 22px rgba(0, 0, 0, 0.25);
+    --shadow-glow: 0 0 15px rgba(237, 187, 153, 0.4);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    line-height: 1; /* Removes built-in vertical padding */
+}
+
+::-webkit-scrollbar {
+    display: none;
+}
+
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--pale-high);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--pale-high-light);
+}
+
+
+html {
+    scroll-behavior: smooth;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+}
+
+#app {
+    display: block;
+    background-color: var(--darker-bg);
+    color: var(--gray-light);
+}
+
+/* --------------------  Header Styles  -------------------- */
+
+header {
+    background: var(--green-fade);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    text-align: center;
+    border-bottom: 1px solid rgba(237, 187, 153, 0.2);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    padding: 0.5rem 1rem;
+}
+
+@media (min-width: 768px) {
+    header {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        align-items: center;
+    }
+}
+
+header h1 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--pale-high);
+    text-shadow: 0 0 10px rgba(237, 187, 153, 0.5);
+    margin: 0.5rem 0;
+}
+
+nav {
+    text-align: center;
+    margin: 0.5rem 0;
+}
+
+nav a {
+    display: inline-block;
+    color: var(--gray-light);
+    font-weight: 500;
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-sm);
+    transition: var(--transition);
+    margin: 0 0.25rem;
+}
+
+nav a:hover {
+    background-color: rgba(237, 187, 153, 0.1);
+    color: var(--pale-high);
+}
+
+a {
+    color: white;
+    text-decoration-line: underline;
+}
+
+a:hover {
+    color: var(--blue-high);
+}
+
+#dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+#dropdown-content {
+    display: none;
+    position: absolute;
+    left: 0;
+    top: 100%;
+    padding: 0.25rem 0;
+    background: rgba(30, 30, 30, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-medium);
+    min-width: 160px;
+    z-index: 100;
+    overflow: hidden;
+}
+
+#dropdown-content a {
+    display: block;
+    padding: 0.8rem 1rem;
+    color: var(--gray-light);
+    font-weight: 500;
+    text-decoration: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+#dropdown-content a:hover {
+    background-color: rgba(237, 187, 153, 0.1);
+    color: var(--pale-high);
+}
+
+#dropdown:hover #dropdown-content {
+    display: block;
+}
+
+#ws-status-indicator {
+    text-align: center;
+    font-size: small;
+    font-weight: 600;
+    border-radius: var(--radius-sm);
+    padding: 0 1rem;
+}
+
+#ws-status-indicator.connected {
+    background: rgba(52, 199, 89, 0.1);
+}
+
+#ws-status-indicator.connecting {
+    background: rgba(255, 165, 0, 0.1);
+}
+
+#ws-status-indicator.error,
+#ws-status-indicator.disconnected {
+    background: rgba(220, 20, 60, 0.1);
+}
+
+#ws-status-indicator.closed {
+    background: rgba(110, 110, 110, 0.12); /* Neutral soft gray */
+}
+
+.status.error,
+.status.locked,
+.status.disconnected {
+    color: red; /* Blocked / restricted */
+}
+
+.status.warning,
+.status.waiting,
+.status.connecting {
+    color: orange; /* Needs attention soon */
+}
+
+.status.playing,
+.status.connected {
+    color: limegreen; /* Active / in progress */
+}
+
+.status.closing,
+.status.pending {
+    color: blueviolet; /* Queued state */
+}
+
+.status.open,
+.status.finished {
+    color: cyan; /* Available (teal) */
+}
+
+.status.closed {
+    color: gray; /* Unavailable (neutral gray) */
+}
+
+/*  ------------- base wireframe styling ------------------*/
+
+main {
+    overflow: hidden;
+    overflow-y: auto;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 1rem;
+}
+
+#views-container {
+    width: 200%;
+    display: grid;
+    grid-template-columns: 100% 100%;
+    grid-gap: 1rem;
+    align-items: start;
+    transform: translateX(0);
+    transition: transform 0.35s ease;
+}
+
+#views-container.show-room {
+    transform: translateX(calc(-100% - 1rem));
+}
+
+#views-container > dl {
+    display: grid;
+    grid-gap: 1rem;
+    align-items: start;
+    width: 50%;
+    overflow: auto;
+}
+
+#views-container > dl > dt,
+#views-container > dl > dd {
+    border-radius: var(--radius-md);
+    overflow: auto;
+}
+
+/* ---------------------------------------------------------------------------------- */
+@media (min-width: 768px) {
+    dl#lobby-view {
+        grid-template-columns: auto minmax(0, 1fr);
+    }
+}
+
+dl#lobby-view > dt,
+dl#lobby-view > dd {
+    background-color: var(--green-low);
+    border: 1px solid rgba(237, 187, 153, 0.3);
+    padding: 1rem;
+}
+
+dl#lobby-view h3 {
+    text-align: center;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(237, 187, 153, 0.2);
+}
+
+dl#lobby-view p {
+    color: gray;
+    text-align: center;
+}
+
+.button-group {
+    white-space: nowrap;
+    overflow-y: hidden;
+    overflow-x: auto;
+    text-align: center;
+    font-size: 0;
+}
+
+.button-group > button:not(:last-child) {
+    margin-right: 0.5rem;
+}
+
+button {
+    cursor: pointer;
+    display: inline-block;
+    min-width: 6rem;
+    border: none;
+    border-radius: var(--radius-md);
+    padding: 1rem;
+    background: linear-gradient(135deg, var(--blue-high) 0%, var(--blue-low) 100%);
+    color: white;
+    font-size: initial;
+    font-weight: 600;
+    text-transform: uppercase;
+    transition: var(--transition);
+}
+
+button:hover {
+    outline: 1px solid;
+    outline-offset: -2px;
+}
+
+button:active {
+    transform: scale(.970);
+}
+
+button.secondary {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--gray-light);
+}
+
+.toggle-button {
+    width: 100%;
+    padding: 0;
+    margin: 1rem 0;
+    background: rgba(0, 122, 255, 0.2);
+    position: relative;
+    font-size: 0;
+    border: 1px solid rgba(237, 187, 153, 0.3);
+    border-radius: 9999px;
+    overflow: hidden;
+    transition: var(--transition);
+}
+
+/* Highlight pill that moves under the active label */
+.toggle-button::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    bottom: 2px;
+    left: 2px;
+    width: calc(50% - (2 * 2px));
+    border-radius: 9999px;
+    background: linear-gradient(135deg, var(--pale-high) 0%, var(--pale-high-light) 100%);
+    transition: transform .25s ease;
+    z-index: 1;
+}
+
+.toggle-button[data-active='join']::after {
+    transform: translateX(calc(100% + (2 * 2px)));
+}
+
+.toggle-button label {
+    display: inline-block;
+    width: 50%;
+    padding: 0.7rem;
+    text-align: center;
+    cursor: pointer;
+    position: relative;
+    z-index: 2;
+    font-size: 0.95rem;
+    font-weight: 600;
+    transition: var(--transition);
+    border: none;
+    background: none;
+}
+
+.toggle-button input {
+    display: none;
+}
+
+.toggle-button input:checked + label {
+    color: black;
+}
+
+#registrar-form .button-group{
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 0.5rem;
+}
+
+form label {
+    display: block;
+}
+
+form input {
+    width: 100%;
+    margin-bottom: 1rem;
+}
+
+label, input, select {
+    font-size: medium;
+    padding: 0.5rem 1rem;
+    color: var(--pale-high);
+    transition: var(--transition-fast);
+}
+
+input, select,
+#room-filters > label {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(237, 187, 153, 0.3);
+    border-radius: var(--radius-sm);
+}
+
+input:focus, select:focus {
+    outline: none;
+    border-color: var(--pale-high);
+    background: rgba(255, 255, 255, 0.12);
+    box-shadow: 0 0 0 2px rgba(237, 187, 153, 0.2);
+}
+
+#room-filters {
+    display: grid;
+    gap: 0.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    margin: 1rem 0;
+}
+
+#filter-joinable {
+    vertical-align: middle;
+    cursor: pointer;
+}
+
+.table-wrap {
+    position: relative;
+    max-height: 305px; /*adjusted to make the parent height match parent's sibling*/
+    overflow: auto;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-sm);
+}
+
+.table-wrap::-webkit-scrollbar {
+    display: initial;
+}
+
+.table-wrap::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.table-wrap::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 5px;
+}
+
+.table-wrap > table {
+    border: none;
+    border-radius: 0;
+}
+
+table {
+    width: 100%;
+    border-radius: var(--radius-sm);
+    border-collapse: collapse;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: var(--transition);
+}
+
+table:not(#room-list) {
+    pointer-events: none;
+}
+
+tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    cursor: pointer;
+}
+
+tbody tr:active {
+    transform: scale(.997);
+}
+
+th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background-color: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(3px);
+    font-weight: 600;
+}
+
+th, td {
+    white-space: nowrap;
+    text-align: left;
+    font-size: 0.95rem;
+    padding: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+th:not(:last-child),
+td:not(:last-child) {
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+td .status {
+    display: inline-block;
+    border: 5px solid;
+    border-radius: 50%;
+    margin-right: 0.5rem;
+}
+
+/* ---------------------------------------------------------------------------------- */
+
+#room-view {
+    color: rgba(255, 255, 255, 40%);
+}
+
+#room-view:not(.waiting, .finished) button[data-action="start"],
+#room-view:not(.playing) button[data-action="pass"] {
+    pointer-events: none;
+    display: none;
+    cursor: not-allowed;
+}
+
+.button-group#room-controls {
+    text-align: center;
+}
+
+@media (min-width: 768px) {
+    .button-group#room-controls {
+        text-align: left;
+    }
+}
+
+#room-view button {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+#room-controls button[data-action="exit"] {
+    background: rgba(220, 20, 60, 0.2);
+    color: #ff6b6b;
+}
+
+#game-state {
+    display: grid;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    text-align: center;
+    background-color: rgba(255, 255, 255, 7%);
+    border-radius: var(--radius-md);
+}
+
+#my-opponents {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+    place-items: center; /* Centers all direct children horizontally and vertically */
+}
+
+#my-opponents > dl {
+    max-width: 80px;
+}
+
+#my-opponents > dl,
+#my-player {
+    overflow: auto;
+    border: 1px solid black;
+    border-radius: var(--radius-sm);
+    background-color: rgba(255, 255, 255, 7%);
+    transition: var(--transition);
+}
+
+#my-opponents > dl.active,
+#my-player.active {
+    animation: strobe 1.5s infinite;
+}
+
+@keyframes strobe {
+    0% {
+        border-color: var(--blue-low);
+    }
+    50% {
+        box-shadow: 0 0 13px var(--blue-high);
+    }
+    100% {
+        border-color: var(--blue-low);
+    }
+}
+
+#my-opponents > dl > dt {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 0.5rem;
+    font-size: 0.8rem;
+}
+
+#my-opponents > dl > dd {
+    display: inline-block;
+    font-size: 0;
+    position: relative;
+    width: 40px;
+    height: 50px;
+}
+
+#my-opponents > dl > dd::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 50%;
+    height: 50%;
+    border-radius: 50%;
+    background: var(--pale-high);
+    z-index: 1;
+}
+
+#my-opponents > dl > dd::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    height: 40%;
+    border-radius: 70% 70% 20% 20%;
+    background: var(--pale-high);
+}
+
+#my-opponents > dl > dd > span {
+    position: absolute;
+    bottom: -5px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2;
+    background: crimson;
+    color: white;
+    font-weight: bold;
+    font-size: 0.8rem;
+    width: 30px;
+    height: 20px;
+    line-height: 20px;
+    border-radius: 4px;
+    border: 2px solid #000;
+    text-align: center;
+}
+dl#my-player {
+    display: grid;
+    gap: 0.5rem;
+    align-items: start;
+    background: rgba(255, 255, 255, 3%);
+    overflow: auto;
+}
+
+dl#my-player > dt {
+    padding: 3px 1rem;
+    position: relative;
+    color: var(--pale-high);
+}
+
+dl#my-player.active > dt::before {
+    position: absolute;
+    top: -3px; /* inverse vertical padding of parent*/
+    left: 50%;
+    transform: translateX(-50%);
+
+    content: "It's Your Turn";
+    background-color: var(--blue-low);
+    color: white;
+    border-radius: 0 0 5px 5px;
+    padding: inherit;
+}
+
+dl#my-player > dd.card-group {
+    background: transparent;
+}
+
+dl#my-player > dd.card-group::-webkit-scrollbar {
+    display: initial;
+}
+
+dl#my-player #draw-card-button {
+    position: sticky;
+    left: 0;
+    vertical-align: top;
+    width: var(--card-width);
+    height: var(--card-height);
+}
+
+/*make a plus from two lines*/
+dl#my-player #draw-card-button::before,
+dl#my-player #draw-card-button::after {
+    content: '';
+    display: block;
+    border-top: 3px solid;
+    transform-origin: center;
+}
+
+dl#my-player #draw-card-button::after {
+    transform: rotate(90deg);
+}
+
+dl#my-player #draw-card-button span {
+    position: absolute;
+    bottom: 1rem;
+    right: 1rem;
+}
+
+dl#my-player > dd.button-group {
+    padding: 0.5rem 0;
+    background: rgba(255, 255, 255, 3%);
+}
+
+dl#my-player #sort-control {
+    display: inline-block;
+    padding: 0.7rem;
+    background: rgba(255, 255, 255, 10%);
+    border-radius: var(--radius-md);
+    margin-right: 0.5rem;
+}
+
+#sort-control > label,
+#sort-control > select {
+    padding: 0;
+    text-transform: uppercase;
+    color: white;
+}
+
+/* ---------------------------------------------------------------------------------- */
+
+em {
+    color: white;
+    font-style: normal;
+    margin: 0 5px;
+}
+
+#guide {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 1rem;
+    margin-top: 2rem;
+    border-radius: var(--radius-lg);
+    overflow: auto;
+}
+
+#guide > h2 {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    text-align: center;
+    font-weight: lighter;
+}
+
+/* --- Accordion Headers (Clickable Titles) --- */
+dl.accordion > dt {
+    margin-top: 1rem;
+}
+
+dl.accordion > dd > p {
+    margin-bottom: 1rem;
+}
+
+dl.accordion > dt,
+dl.accordion > dd.grid-layout > dl > dt {
+    display: block;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 1.2rem;
+    color: var(--pale-high);
+    background-color: rgba(255, 255, 255, 0.05);
+    padding: 1rem;
+    position: relative;
+    user-select: none;
+    border-radius: var(--radius-md);
+}
+
+/* Hover / Focus feedback */
+dl.accordion > dt:hover,
+dl.accordion > dt:focus,
+dl.accordion > dd.grid-layout > dl > dt:hover,
+dl.accordion > dd.grid-layout > dl > dt:focus {
+    background-color: rgba(237, 187, 153, 0.1);
+}
+
+/* --- Expand/Collapse Indicator (plus icon) --- */
+dl.accordion > dt::after,
+dl.accordion > dd.grid-layout > dl > dt::after {
+    content: '\271A';
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    transition: transform 0.3s ease;
+}
+
+/* --- Active (open) header --- */
+dl.accordion > dt.active,
+dl.accordion > dd.grid-layout > dl > dt.active {
+    background-color: rgba(237, 187, 153, 0.1);
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    margin-bottom: 0;
+}
+
+dl.accordion > dt.active::after,
+dl.accordion > dd.grid-layout > dl > dt.active::after {
+    color: white;
+    transform: translateY(-50%) rotate(45deg);
+}
+
+/* --- Accordion Content (hidden by default) --- */
+dl.accordion > dd,
+dl.accordion > dd.grid-layout > dl > dd {
+    display: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 1rem;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: var(--pale-high-light);
+    background-color: rgba(237, 187, 153, 0.1);
+    border-radius: 0 0 var(--radius-md) var(--radius-md);
+}
+
+/* --- Active section reveals content --- */
+dl.accordion > dt.active + dd,
+dl.accordion > dd.grid-layout > dl > dt.active + dd {
+    display: block;
+}
+
+dl.accordion > dt.active + dd.grid-layout,
+dl.accordion > dd.grid-layout > dl > dt.active + dd.grid-layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-gap: 1rem;
+}
+
+#special-cards > ul,
+#regular-cards > ul {
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-gap: 2rem;
+    list-style: none;
+}
+
+#special-cards > ul > li {
+    overflow: auto;
+    list-style: none;
+    border-radius: var(--radius-md);
+}
+
+#special-cards .card-group {
+    background-color: rgba(237, 187, 153, 0.1);
+}
+
+#regular-cards [data-effect] {
+    overflow: auto;
+    font-size: medium;
+    text-align: center;
+    font-weight: bold;
+    background: rgba(11, 83, 69, 0.3);
+    border-radius: var(--radius-md);
+}
+
+[data-effect] > p {
+    padding: 1rem 0;
+}
+
+[data-effect] .accordion > dt {
+    margin: 0;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+}
+
+[data-effect] .card-group {
+    background-color: rgba(0, 0, 0, 0.1);
+    padding: 1rem 0;
+}
+
+#how-to-play > dl {
+    position: relative; /* To position the number absolutely inside */
+    counter-increment: item; /* Increase counter */
+}
+
+#how-to-play > dl > dt {
+    padding-left: 3rem;
+}
+
+#how-to-play > dl > dt::before {
+    content: counter(item);
+    position: absolute;
+    left: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+
+    width: 1.7em;
+    height: 1.7em;
+    line-height: 1.7em;
+    text-align: center;
+
+    background-color: var(--white-fade);
+    color: black;
+    border-radius: 50%;
+    font-weight: bold;
+}
+
+.unordered-list > * {
+    display: list-item;
+    list-style-type: disc;
+    margin-left: 1rem;
+    margin-bottom: 1rem;
+}
+
+.unordered-list > *:last-child {
+    margin-bottom: 0;
+}
+
+@media (min-width: 768px) {
+    .active + #rules-content,
+    .active + #scoring-tables,
+    #special-cards > ul,
+    #regular-cards > ul {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .active + #how-to-play {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (min-width: 1024px) {
+    #rules-content {
+        grid-template-columns: repeat(4, 1fr);
+    }
+
+    #special-cards > ul,
+    #regular-cards > ul {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* ---------------------------------------------------------------------------------- */
+
+#message-board {
+    display: none;
+    color: var(--gray-light);
+
+    position: fixed;
+    inset: 0;
+    z-index: 1200;
+    background: radial-gradient(circle at center, rgba(11, 83, 69, 0.9), rgba(10, 10, 10, 0.95));
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    animation: fadeIn 0.4s ease;
+}
+
+#message-board.active,
+#message-board > dl.active {
+    display: block;
+}
+
+#message-board > dl {
+    display: none;
+
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+
+    background: linear-gradient(145deg, rgba(30, 30, 30, 0.95), rgba(20, 20, 20, 0.9));
+    border: 2px solid rgba(237, 187, 153, 0.25);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-medium), 0 0 20px rgba(237, 187, 153, 0.3);
+    text-align: center;
+    padding: 0 1rem;
+}
+
+#message-board > dl > dt {
+    font-weight: bold;
+    color: var(--blue-high);
+    border-bottom: 1px solid;
+    padding: 1rem 0;
+}
+
+#message-board > dl > dd {
+    padding: 1rem 0;
+}
+
+.winner-row td:first-child::after {
+    content: " ⭐";
+    margin-left: 4px;
+}
+
+#start-countdown p {
+    font-size: 3rem;
+}
+
+#suit-form {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-gap: 1rem;
+}
+
+#suit-form > :last-child {
+    /*entire width*/
+    grid-column: 1 / -1;
+}
+
+#suit-form input[type="radio"] {
+    pointer-events: none;
+    opacity: 0; /* To hide the radio button */
+    position: absolute; /* to remove the space from the button */
+}
+
+#suit-form label {
+    cursor: pointer;
+    position: relative;
+    border: 2px solid rgba(11, 83, 69, 0.9);
+    border-radius: var(--radius-md);
+    background: rgba(11, 83, 69, 0.4);
+    color: black;
+    font-size: 6rem;
+    line-height: 1; /* Removes built-in vertical padding */
+    transition: var(--transition);
+}
+
+#suit-form label:hover {
+    border-color: var(--blue-high);
+}
+
+#suit-form label[for='suit-hearts']::before {
+    content: '\2665';
+    color: crimson;
+}
+
+#suit-form label[for='suit-diamonds']::before {
+    content: '\2666';
+    color: crimson;
+}
+
+#suit-form label[for='suit-clubs']::before {
+    content: '\2663';
+}
+
+#suit-form label[for='suit-spades']::before {
+    content: '\2660';
+}
+
+#suit-form input[type="radio"]:checked + label {
+    border: 2px solid var(--blue-high);
+    box-shadow: 0 0 20px rgba(237, 187, 153, 0.5);
+    background: transparent;
+}
+
+#suit-form input[type="radio"]:checked + label::before {
+    color: var(--blue-high);
+}
+
+/* ---------------------------------------------------------------------------------- */
+
+footer {
+    background: var(--green-fade);
+    text-align: center;
+    padding: 2rem 1rem;
+    font-size: 1rem;
+    color: var(--gray-text);
+    margin-top: 2rem;
+    border-top: 1px solid rgba(237, 187, 153, 0.2);
+}
+
+footer p {
+    margin-bottom: 1rem;
+}
+
+footer span#year {
+    margin-right: 1rem;
+}
+
+footer span#year:before {
+    content: "\00A9"; /*copyright symbol*/
+}
