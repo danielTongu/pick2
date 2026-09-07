@@ -7,21 +7,27 @@ export class PageState {
     static #MODE_KEY = "pick2.mode";
     static #INTENT_KEY = "pick2.gameIntent";
     static #NOTICE_KEY = "pick2.notice";
-    static #NETWORK_URL_KEY = "pick2.networkUrl";
+    static #HOSTED_URL_KEY = "pick2.hostedUrl";
 
-    /** @returns {"local"|"network"} Selected play mode. */
+    /** @returns {"direct"|"hosted"} Selected play mode. */
     static getMode() {
+        return this.getModePreference() ?? "direct";
+    }
+
+    /** @returns {"direct"|"hosted"|null} Explicitly selected mode, if any. */
+    static getModePreference() {
         const queryMode = new URLSearchParams(globalThis.location?.search ?? "").get("mode");
         const savedMode = globalThis.sessionStorage?.getItem(this.#MODE_KEY);
         const requestedMode = queryMode ?? savedMode;
-        return requestedMode === "network"
-            ? "network"
-            : "local";
+
+        return requestedMode === "hosted" || requestedMode === "direct"
+            ? requestedMode
+            : null;
     }
 
     /** @param {string} mode - Play mode. */
     static setMode(mode) {
-        globalThis.sessionStorage?.setItem(this.#MODE_KEY, mode === "network" ? "network" : "local");
+        globalThis.sessionStorage?.setItem(this.#MODE_KEY, mode === "hosted" ? "hosted" : "direct");
     }
 
     /** @param {Object} intent - Room action and data envelope. */
@@ -65,14 +71,14 @@ export class PageState {
         }
     }
 
-    /** @param {string} url - Verified Network-mode WebSocket URL. */
-    static setNetworkUrl(url) {
-        globalThis.sessionStorage?.setItem(this.#NETWORK_URL_KEY, url);
+    /** @param {string} url - Verified Hosted-mode WebSocket URL. */
+    static setHostedUrl(url) {
+        globalThis.sessionStorage?.setItem(this.#HOSTED_URL_KEY, url);
     }
 
-    /** Clears the last verified Network-mode URL. */
-    static clearNetworkUrl() {
-        globalThis.sessionStorage?.removeItem(this.#NETWORK_URL_KEY);
+    /** Clears the last verified Hosted-mode URL. */
+    static clearHostedUrl() {
+        globalThis.sessionStorage?.removeItem(this.#HOSTED_URL_KEY);
     }
 
     /** @returns {string|null} Configured server origin, when supplied. */
@@ -86,12 +92,12 @@ export class PageState {
     }
 
     /**
-     * Resolves a server origin as a Network-mode WebSocket URL.
+     * Resolves a server origin as a Hosted-mode WebSocket URL.
      *
      * @param {string|null} origin - Server origin to resolve.
      * @returns {string} WebSocket URL.
      */
-    static resolveNetworkUrl(origin) {
+    static resolveHostedUrl(origin) {
 
         if (origin === null) {
             throw new Error("Server origin is not configured.");
@@ -126,12 +132,12 @@ export class PageState {
             return null;
         }
 
-        return this.resolveNetworkUrl(origin);
+        return this.resolveHostedUrl(origin);
     }
 
-    /** @returns {string} Last verified or configured Network-mode WebSocket URL. */
-    static getNetworkUrl() {
-        const savedUrl = globalThis.sessionStorage?.getItem(this.#NETWORK_URL_KEY)?.trim();
+    /** @returns {string} Last verified or configured Hosted-mode WebSocket URL. */
+    static getHostedUrl() {
+        const savedUrl = globalThis.sessionStorage?.getItem(this.#HOSTED_URL_KEY)?.trim();
 
         if (savedUrl) {
             return savedUrl;
@@ -140,7 +146,7 @@ export class PageState {
         const configuredOrigin = this.getConfiguredServerOrigin();
 
         if (configuredOrigin !== null) {
-            return this.resolveNetworkUrl(configuredOrigin);
+            return this.resolveHostedUrl(configuredOrigin);
         }
 
         const currentHostUrl = this.getCurrentHostUrl();

@@ -22,6 +22,7 @@
     <meta name="twitter:description" content="Create a private game, invite your players, and start the next deal.">
 
     <meta name="pick-2-shared-root" content="./ui/">
+    <!-- Set to the separate Hosted server origin for GitHub Pages deployments; empty uses this page's origin. -->
     <meta name="pick-2-server-origin" content="">
 
     <link rel="stylesheet" href="ui/styles/base.css">
@@ -36,7 +37,7 @@
             "@type": "WebApplication",
             "name": "Pick 2",
             "url": "https://danieltongu.github.io/pick-2/",
-            "description": "A browser card game with Local and Network games.",
+            "description": "A browser card game with Direct and Hosted games.",
             "applicationCategory": "GameApplication",
             "operatingSystem": "Any",
             "browserRequirements": "Requires JavaScript and a modern web browser.",
@@ -60,14 +61,14 @@
                 </span>
             </a>
         </h1>
-        <aside id="connection-status" class="toggle-switch" data-status="connecting" aria-label="Connection mode. Local connecting.">
+        <aside id="connection-status" class="toggle-switch" data-status="connecting" aria-label="Connection mode. Direct connecting.">
             <label>
-                <input id="local-mode-input" name="connection-mode" type="radio" value="local" checked>
-                <span>Local</span>
+                <input id="direct-mode-input" name="connection-mode" type="radio" value="direct" checked>
+                <span>Direct</span>
             </label>
             <label>
-                <input id="network-mode-input" name="connection-mode" type="radio" value="network">
-                <span>Network</span>
+                <input id="hosted-mode-input" name="connection-mode" type="radio" value="hosted">
+                <span>Hosted</span>
             </label>
         </aside>
     </header>
@@ -170,19 +171,22 @@
     </article>
 
     <article id="network-connection-view" data-status="connecting" aria-labelledby="network-connection-title" hidden>
-        <header>
-            <span class="section-kicker">Network mode</span>
-            <h2 id="network-connection-title">Reaching the table…</h2>
+        <header class="network-panel-header">
+            <span class="section-kicker">Hosted mode</span>
+            <h2 id="network-connection-title"></h2>
+            <p id="network-connection-message" aria-live="polite"></p>
         </header>
-        <section>
+        <form id="network-connection-form">
+            <label for="network-connection-origin">Network host address</label>
+            <div class="network-connection-field">
+                <input id="network-connection-origin" type="url" inputmode="url" autocomplete="url" spellcheck="false" placeholder="https://play.example.com" aria-describedby="network-connection-help">
+                <button id="network-connection-connect-button" type="submit" disabled>Connecting…</button>
+            </div>
+            <p id="network-connection-help">Provide the server origin or WebSocket URL. Pick 2 will resolve the WebSocket endpoint.</p>
+        </form>
+        <section class="network-connection-status" aria-hidden="true">
             <i id="network-connection-indicator" aria-hidden="true"></i>
-            <section id="network-connection-message" aria-live="polite">Checking the configured and local Pick 2 Network hosts.</section>
-            <section id="network-connection-origin" aria-label="Network host address" hidden></section>
         </section>
-        <footer id="network-connection-actions">
-            <button id="network-connection-retry-button" hidden>Retry</button>
-            <button id="network-connection-use-host-button" hidden>Use this host</button>
-        </footer>
     </article>
 
     <footer id="app-footer">
@@ -195,7 +199,7 @@
         </nav>
         <small id="app-footer-note">
             <span>© <time id="copyright-year" datetime="2026">2026</time> Pick 2. All rights reserved.</span>
-            <span>Local and network play</span>
+            <span>Direct and hosted play</span>
         </small>
     </footer>
 </main>
@@ -205,7 +209,7 @@
 <aside id="alert-dialog" class="dialog-overlay" data-status="info" aria-labelledby="alert-title" aria-describedby="alert-message" hidden>
     <div class="dialog-panel">
         <header>
-            <i id="alert-icon" data-icon="info" aria-hidden="true"></i>
+            <span id="alert-icon" data-icon="info" aria-hidden="true"></span>
             <h1 id="alert-title"></h1>
         </header>
         <section id="alert-message"></section>

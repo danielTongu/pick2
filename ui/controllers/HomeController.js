@@ -9,7 +9,7 @@ import { NotificationUtils } from "../utilities/NotificationUtils.js";
 import { RoomRowUtils } from "../utilities/RoomRowUtils.js";
 import { ViewController } from "./ViewController.js";
 
-/** Controls the shared Local/Network home directory. */
+    /** Controls the shared Direct/Hosted home directory. */
 export class HomeController extends ViewController {
     /** @type {Object|null} */
     #home = null;
@@ -42,10 +42,10 @@ export class HomeController extends ViewController {
     #connectionStatus;
 
     /** @type {HTMLInputElement} */
-    #localModeInput;
+    #directModeInput;
 
     /** @type {HTMLInputElement} */
-    #networkModeInput;
+    #hostedModeInput;
 
     /** Creates the shared Home controller. */
     constructor() {
@@ -55,8 +55,8 @@ export class HomeController extends ViewController {
         this.#roomNameInput = DomUtils.require("#room-name-input", HTMLInputElement);
         this.#playerLimitInput = DomUtils.require("#player-limit-input", HTMLInputElement);
         this.#connectionStatus = DomUtils.require("#connection-status", HTMLElement);
-        this.#localModeInput = DomUtils.require("#local-mode-input", HTMLInputElement);
-        this.#networkModeInput = DomUtils.require("#network-mode-input", HTMLInputElement);
+        this.#directModeInput = DomUtils.require("#direct-mode-input", HTMLInputElement);
+        this.#hostedModeInput = DomUtils.require("#hosted-mode-input", HTMLInputElement);
     }
 
     /** @param {import("../../runtime/Client.js").Client} client - Active endpoint client. */
@@ -84,7 +84,7 @@ export class HomeController extends ViewController {
         DomUtils.require("#status-filter", HTMLSelectElement)
             .addEventListener("change", this.#handleStatusFilterChange.bind(this));
 
-        for (const input of [this.#localModeInput, this.#networkModeInput]) {
+        for (const input of [this.#directModeInput, this.#hostedModeInput]) {
             input.addEventListener("change", this.#handleModeChange.bind(this));
         }
     }
@@ -110,11 +110,11 @@ export class HomeController extends ViewController {
     }
 
     /** @param {string} mode - Active play mode. */
-    /** Selects Local or Network mode and refreshes endpoint capabilities. @param {string} mode */
+    /** Selects Direct or Hosted mode and refreshes endpoint capabilities. @param {string} mode */
     selectMode(mode) {
-        const isNetwork = mode === "network";
-        this.#localModeInput.checked = !isNetwork;
-        this.#networkModeInput.checked = isNetwork;
+        const isHosted = mode === "hosted";
+        this.#directModeInput.checked = !isHosted;
+        this.#hostedModeInput.checked = isHosted;
         this.#connectionStatus.dataset.status = "connecting";
         this.#gameTableBody.replaceChildren();
         this.#renderEmptyGameMessage();
@@ -189,8 +189,8 @@ export class HomeController extends ViewController {
 
     /** Renders connection state and mode switching on one control. */
     #renderConnectionStatus() {
-        const isNetwork = this.#networkModeInput.checked;
-        const modeLabel = isNetwork ? "Network" : "Local";
+        const isHosted = this.#hostedModeInput.checked;
+        const modeLabel = isHosted ? "Hosted" : "Direct";
         const connectionState = this.#connectionStatus.dataset.status ?? "connecting";
 
         const statusLabel = {
@@ -284,7 +284,7 @@ export class HomeController extends ViewController {
         }
     }
 
-    /** Opens a selected Local or Network room. */
+    /** Opens a selected Direct or Hosted room. */
     #openRoom(room) {
         const roomName = ValidationUtils.requiredString(room.roomName, "Room name");
         this.#gameHandler?.(Constants.ACTIONS.VIEW, {roomName});

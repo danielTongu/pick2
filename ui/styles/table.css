@@ -2,7 +2,7 @@
 
 .table-container {
     overflow-x: auto;
-    border-top: 1px solid rgba(255, 255, 255, .12);
+    border-top: 1px solid color-mix(in srgb, var(--white) 12%, transparent);
 }
 
 table {
@@ -18,21 +18,22 @@ table {
 }
 
 thead {
-    background: rgba(255, 255, 255, .08);
+    background: color-mix(in srgb, var(--white) 8%, transparent);
 }
 
 th {
     padding: var(--table-heading-padding);
-    color: var(--muted);
+    color: var(--gray);
     font-size: 9px;
     font-weight: 800;
     letter-spacing: .1em;
     text-align: left;
     text-transform: uppercase;
+    text-wrap: nowrap;
 }
 
 tr {
-    border-bottom: 1px solid rgba(255, 255, 255, .08);
+    border-bottom: 1px solid color-mix(in srgb, var(--white) 8%, transparent);
     transition:
             background-color .2s ease,
             color .2s ease;
@@ -41,7 +42,7 @@ tr {
 td {
     padding: var(--table-cell-padding);
     font-weight: 500;
-    white-space: nowrap;
+    text-wrap: nowrap;
 }
 
 table:has(> tbody:empty)::after {
@@ -49,7 +50,7 @@ table:has(> tbody:empty)::after {
     display: table-caption;
     caption-side: bottom;
     padding: var(--table-cell-padding);
-    color: var(--muted);
+    color: var(--gray);
     font-size: small;
     font-style: italic;
 }
@@ -59,7 +60,7 @@ tbody tr[tabindex] {
 }
 
 tbody tr:is(:hover, :focus-visible) {
-    background: rgb(0 255 255 / .12);
+    background: color-mix(in srgb, var(--cyan) 12%, transparent);
 }
 
 tbody tr:focus-visible {
@@ -67,7 +68,7 @@ tbody tr:focus-visible {
 }
 
 tbody tr[data-is-selected="true"] {
-    color: cyan;
+    color: var(--cyan);
 }
 
 td:empty::before {
@@ -95,24 +96,24 @@ td[data-status] > .status-indicator {
     margin-left: var(--container-spacing);
     border-radius: var(--container-radius);
     vertical-align: middle;
-    background: gray;
+    background: var(--gray);
     transition: background .2s ease-in-out;
 }
 
 td[data-status="waiting"] > .status-indicator {
-    background: orange;
+    background: var(--orange);
 }
 
 td[data-status="playing"] > .status-indicator {
-    background: limegreen;
+    background: var(--green);
 }
 
 td[data-status="finished"] > .status-indicator {
-    background: gold;
+    background: var(--gold);
 }
 
 td[data-status="error"] > .status-indicator {
-    background: crimson;
+    background: var(--red);
 }
 
 td[data-player-count]::before {

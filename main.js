@@ -14,8 +14,8 @@ import { PageState } from "./ui/PageState.js";
 import { PlayingCard } from "./ui/PlayingCard.js";
 
 function createClient(mode) {
-    const endpoint = mode === "network"
-        ? new NetworkClient(PageState.getNetworkUrl())
+    const endpoint = mode === "hosted"
+        ? new NetworkClient(PageState.getHostedUrl())
         : new Browser();
 
     return new Client(endpoint);
@@ -68,14 +68,14 @@ class HomePage {
     #controller = new HomeController();
     #networkController = new NetworkConnectionController();
     #client = null;
-    #mode = "local";
-    #preferredMode = PageState.getMode();
+    #mode = "direct";
+    #preferredMode = PageState.getModePreference();
     #notice = PageState.takeNotice();
 
     async start() {
         this.#controller.setModeHandler(this.#handleMode.bind(this));
         this.#controller.setGameHandler(this.#enterGame.bind(this));
-        this.#networkController.setConnectedHandler(this.#handleNetworkConnected.bind(this));
+        this.#networkController.setConnectedHandler(this.#handleHostedConnected.bind(this));
 
         await this.#controller.initialize();
         this.#networkController.initialize();
@@ -84,10 +84,12 @@ class HomePage {
             this.#controller.handleNotification(this.#notice);
         }
 
-        if (this.#preferredMode === "network") {
-            this.#selectNetwork();
+        if (this.#preferredMode === "hosted") {
+            this.#selectHosted();
+        } else if (this.#preferredMode === "direct") {
+            this.#selectDirect();
         } else {
-            this.#selectLocal();
+            this.#selectHosted(true);
         }
     }
 
@@ -111,7 +113,7 @@ class HomePage {
 
     #connect(requestedMode) {
         this.#disconnect();
-        this.#mode = requestedMode === "network" ? "network" : "local";
+        this.#mode = requestedMode === "hosted" ? "hosted" : "direct";
         PageState.setMode(this.#mode);
         this.#controller.selectMode(this.#mode);
 
@@ -122,8 +124,8 @@ class HomePage {
         let statusHandler = null;
         let dataHandler = null;
 
-        if (this.#mode === "network") {
-            const networkUrl = PageState.getNetworkUrl();
+        if (this.#mode === "hosted") {
+            const networkUrl = PageState.getHostedUrl();
             statusHandler = this.#handleNetworkStatus.bind(this, nextClient, networkUrl);
             dataHandler = this.#handleNetworkData.bind(this, nextClient);
         }
@@ -132,7 +134,7 @@ class HomePage {
     }
 
     #handleNetworkStatus(expectedClient, networkUrl, status) {
-        if (this.#client === expectedClient && this.#mode === "network") {
+        if (this.#client === expectedClient && this.#mode === "hosted") {
             this.#showNetworkState(status, networkUrl);
         }
     }
@@ -140,7 +142,7 @@ class HomePage {
     #handleNetworkData(expectedClient, view) {
         if (
             this.#client !== expectedClient ||
-            this.#mode !== "network" ||
+            this.#mode !== "hosted" ||
             view !== Constants.VIEWS.HOME
         ) {
             return;
@@ -148,38 +150,45 @@ class HomePage {
 
         this.#networkController.hide();
         DomUtils.show(this.#homeView);
-        this.#updateModeUrl("network");
+        this.#updateModeUrl("hosted");
     }
 
-    #selectLocal() {
+    #selectDirect() {
         this.#networkController.cancel();
         this.#networkController.hide();
         DomUtils.show(this.#homeView);
-        PageState.clearNetworkUrl();
-        this.#updateModeUrl("local");
-        this.#connect("local");
+        PageState.clearHostedUrl();
+        this.#updateModeUrl("direct");
+        this.#connect("direct");
     }
 
-    #selectNetwork() {
+    #selectHosted(fallbackToDirect = false) {
         this.#disconnect();
-        this.#mode = "network";
-        PageState.setMode("network");
-        this.#controller.selectMode("network");
+        this.#mode = "hosted";
+        PageState.setMode("hosted");
+        this.#controller.selectMode("hosted");
         this.#showNetworkState("connecting", "");
-        void this.#networkController.connect(null);
+        void this.#networkController.connect(null)
+            .then(this.#handleAutomaticHostedResult.bind(this, fallbackToDirect));
     }
 
-    #handleMode(mode) {
-        if (mode === "network") {
-            this.#selectNetwork();
-        } else {
-            this.#selectLocal();
+    #handleAutomaticHostedResult(fallbackToDirect, isAvailable) {
+        if (fallbackToDirect && !isAvailable && this.#mode === "hosted") {
+            this.#selectDirect();
         }
     }
 
-    #handleNetworkConnected(networkUrl) {
-        PageState.setNetworkUrl(networkUrl);
-        this.#connect("network");
+    #handleMode(mode) {
+        if (mode === "hosted") {
+            this.#selectHosted();
+        } else {
+            this.#selectDirect();
+        }
+    }
+
+    #handleHostedConnected(networkUrl) {
+        PageState.setHostedUrl(networkUrl);
+        this.#connect("hosted");
     }
 
     #enterGame(action, data) {

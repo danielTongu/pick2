@@ -7,9 +7,9 @@
     gap: 8px;
     padding: 8px 18px;
     border-radius: 999px;
-    background: rgba(255, 255, 255, .08);
+    background: color-mix(in srgb, var(--white) 8%, transparent);
     font-weight: 600;
-    color: var(--muted);
+    color: var(--gray);
 }
 
 #connection-status::before {
@@ -17,18 +17,18 @@
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: #68ad5c;
-    box-shadow: 0 0 0 4px rgba(104, 173, 92, .15);
+    background: var(--green);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--green) 15%, transparent);
 }
 
 #connection-status[data-status="connecting"]::before {
-    background: #f59e0b;
-    box-shadow: 0 0 0 4px rgba(245, 158, 11, .15);
+    background: var(--orange);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--orange) 15%, transparent);
 }
 
 #connection-status[data-status="error"]::before {
     background: var(--red);
-    box-shadow: 0 0 0 4px rgba(161, 61, 54, .15);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--red) 15%, transparent);
 }
 
 /* ----- main game view ----- */
@@ -53,7 +53,7 @@
 }
 
 #info-table .placeholder-row td {
-    color: var(--muted);
+    color: var(--gray);
     font-weight: 400;
 }
 
@@ -73,26 +73,27 @@
 }
 
 #join-button {
-    --button-background: var(--forest-soft);
+    --button-background: var(--green);
 }
 
 #invite-button {
-    --button-background: var(--acid);
-    --button-color: var(--control-ink);
-    --button-border: 1px solid var(--forest);
+    --button-background: var(--light-green);
+    --button-color: var(--black);
+    --button-border: 1px solid var(--dark-green);
 }
 
 /* ----- play area ----- */
 
 #play-area {
+    --light-green: lime;
     display: grid;
     grid-template-rows: 0.3fr 0.7fr 1fr;
     padding: 5px;
     border: 1px solid var(--line);
     border-radius: 18px;
-    background: var(--forest);
+    background: var(--dark-green);
     min-height: 80vh;
-    color: rgba(255,255,255,.55);
+    color: color-mix(in srgb, var(--white) 55%, transparent);
     text-wrap: nowrap;
     overflow: hidden;
     position: relative;
@@ -107,12 +108,12 @@
 
 #play-area > #player-area,
 #play-area > #opponent-list > .opponent {
-    background: rgba(255,255,255,.04);
+    background: color-mix(in srgb, var(--white) 4%, transparent);
     border: 2px solid;
 }
 
 #play-area[data-status="finished"] [data-is-winner="true"]{
-    color: gold;
+    color: var(--gold);
 }
 
 #play-area[data-status="playing"] [data-is-turn-owner="true"] {
@@ -127,7 +128,7 @@
 
 @keyframes turn-owner-border-strobe {
     0%, 100% {
-        color: limegreen;
+        color: var(--light-green);
     }
 
     50% {
@@ -166,7 +167,7 @@
 .opponent {
     --opponent-height: 100cqh;
     --opponent-width: calc(var(--opponent-height) * .72);
-    --opponent-skin: #edbb99;
+    --opponent-skin: var(--peach);
 
     border-radius: calc(var(--container-radius) / 2);
     border-bottom-color: transparent;
@@ -219,9 +220,9 @@
 
     min-width: calc(var(--opponent-width) * .38);
     height: calc(var(--opponent-height) * .20);
-    border: 2px solid black;
-    background: crimson;
-    color: white;
+    border: 2px solid var(--black);
+    background: var(--red);
+    color: var(--white);
 
     box-shadow: var(--shadow-black);
 
@@ -317,8 +318,8 @@
 
 #player-actions {
     --button-padding: 1rem;
-    --button-border: 1px solid var(--forest);
-    --button-background: var(--forest-soft);
+    --button-border: 1px solid var(--dark-green);
+    --button-background: var(--green);
 
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
@@ -331,7 +332,7 @@
     border: var(--button-border);
     border-radius: var(--button-radius, 999px);
     background: var(--button-background);
-    color: white;
+    color: var(--white);
     font-weight: 600;
     cursor: pointer;
     transition: background .2s, transform .1s;
@@ -353,7 +354,7 @@
 }
 
 #card-sort-control:has(select:focus-visible) {
-    outline: 3px solid var(--acid);
+    outline: 3px solid var(--light-green);
     outline-offset: 3px;
 }
 
@@ -406,7 +407,7 @@ summary::after {
     content: "+";
     font-size: 2rem;
     text-align: right;
-    color: var(--acid);
+    color: var(--light-green);
 }
 
 summary {
@@ -420,11 +421,11 @@ summary {
 }
 
 summary  > b {
-    color: var(--acid);
+    color: var(--light-green);
 }
 
 summary > span {
-    color: var(--muted);
+    color: var(--gray);
     font-weight:bold;
     text-transform: capitalize;
 }
@@ -432,23 +433,23 @@ summary > span {
 summary:not(#guide-header) + div {
     display: grid;
     grid-template-columns: 1fr;
-    border: 3px solid black;
+    border: 3px solid var(--black);
 }
 
 summary + div > article {
     display: grid;
-    border: 3px solid black;
+    border: 3px solid var(--black);
     padding: 1rem;
 }
 
 article > b + span {
-    color: var(--muted);
+    color: var(--gray);
 }
 
 #scores-tables table {
     --table-heading-padding: 8px 12px;
     --table-cell-padding: 8px 12px;
-    --table-border: 3px solid black;
+    --table-border: 3px solid var(--black);
     --table-font-size: 13px;
 }
 

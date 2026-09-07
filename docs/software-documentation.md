@@ -1,149 +1,318 @@
 # Pick 2 Software Documentation
 
-## 1. Purpose and scope
+## 1. Purpose and authority
 
-Pick 2 is a browser card game with Local and Network play modes. Both modes use the same pages, UI controllers, `Client` API, `Host`, action vocabulary, response envelopes, and unchanged `core/` rules. Only their runtime boundaries differ.
+This document defines the observable behavior, domain policies, contracts, and
+maintenance rules for Pick 2. It is written for maintainers and contributors:
+it explains what the software must do and where a policy belongs without
+describing every private implementation detail.
 
-User-facing rules are summarized in the project README and in the guide embedded in `room.html`.
+The document is normative where it uses **MUST**, **MUST NOT**, **SHOULD**, or
+**MAY**. When behavior changes, update this document, the README, the in-page
+guide, and focused tests in the same change.
 
-The public page and protocol vocabulary is **Home** for the room directory and
-creation view, and **Room** for active play or viewing. `Room` is the core
-domain model that owns one match's membership and Pick 2 rules.
+Pick 2 is a browser card game with Direct and Hosted modes. Both modes expose
+the same Home and Room experiences, actions, core rules, response envelope, and
+client data shape. The transport and persistence boundary differs by mode.
 
-## 2. System architecture
+## 2. Product vocabulary
 
-The project is organized into focused top-level roots:
+- **Home** is the room directory and room-creation experience.
+- **Room** is both the active play/viewing page and the core domain object for
+  one match.
+- **Player** is a seated participant whose hand and turn state are private to
+  that player where appropriate.
+- **Viewer** is connected to a Room without occupying a player seat.
+- **Bot** is an automated Player controlled by the host.
+- **PlayerCircle** is the Room's turn-order structure. It owns circular player
+  links, direction, and the nullable turn-owner cursor. It MUST NOT own room or
+  player activity timestamps.
+- **Host** is the authoritative coordinator for rooms, peers, actions,
+  notifications, automated turns, and cleanup.
+
+## 3. System boundaries
+
+The application has two HTML entry points and four responsibility areas:
 
 ```text
-index.html          Shared Home page and room directory
-room.html           Shared active Room and guide
-core/               Rules, models, `Room`, bot behavior, and DTO mapping
-runtime/            Client, Host, browser endpoints, Node network boundary
-ui/                 Shared controllers, page state, elements, styles, and utilities
+index.html          Home page
+room.html           Room page and in-page guide
+core/               Domain rules, models, bots, and DTO mapping
+runtime/            Client, Host, browser runtime, and Node hosted runtime
+ui/                 Controllers, page state, elements, styles, and utilities
 server.js           Node Network entry point
 ```
 
-The Node server and static hosts serve the same two HTML files and assets. Play
-mode is selected by choosing an endpoint, not by loading an edition-specific UI.
+The UI translates user interaction into named actions and renders authoritative
+snapshots. It MUST NOT implement a second copy of room rules or normalize
+competing player DTO shapes.
 
-```text
-UI controllers → Client → Browser → Host → core       (Local)
-UI controllers → Client → NetworkClient ⇄ Network → Host → core  (Network)
+The Host owns orchestration and authority. The core owns domain validity,
+membership, turns, cards, idle state, and round state. `StateMapper` defines the
+boundary between domain state and browser-safe data. Direct and Hosted hosts
+MUST preserve these responsibilities even when their transports differ.
+
+Direct mode connects `Client` directly to a browser-owned Host and uses browser
+storage for custom room definitions. Hosted mode connects through a WebSocket
+and uses the Node runtime's storage adapter. Hosted custom rooms do not
+automatically receive bots; Direct custom rooms do according to the direct host
+profile. Default rooms remain available according to the configured defaults.
+
+## 4. Names and identity
+
+Player and room names are user-facing identifiers, not arbitrary strings. A
+valid name MUST:
+
+- contain between 2 and 24 characters for a Player, or between 2 and 48
+  characters for a Room;
+- contain Unicode letters or numbers, with words separated only by spaces,
+  apostrophes, curly apostrophes, or hyphens;
+- have no leading or trailing whitespace;
+- contain no symbols, control characters, repeated separator patterns, or
+  separator-only content.
+
+The accepted form is equivalent to:
+
+```regex
+^[\p{L}\p{N}]+(?:[ '\u2019-][\p{L}\p{N}]+)*$
 ```
 
-`Host.js` is transport-neutral and imports only core code plus its rate limiter. `Browser.js` and `NetworkClient.js` are browser-only leaves. `Network.js` is a Node-only leaf for Express, HTTP, operating-system access, and WebSockets. Browser and Node dependencies therefore never share an import graph.
+Validation MUST occur at the user-facing boundary and again in the domain
+model. Normalized player keys are lookup identifiers and may be more tolerant
+than creation validation; a key MUST NOT be treated as proof that the original
+display name was valid.
 
-### 2.1 Browser responsibilities
+Player names MUST be unique within a Room. Room capacity applies only to
+Players, not Viewers.
 
-- `main.js` starts either `HomeController` or `RoomController` from `body[data-page]`.
-- `Client` owns response parsing, the per-tab identifier, and the temporary hand sort key.
-- Every endpoint implements `open(callbacks)` and returns `request(request)` plus `close()`.
-- `Browser` connects directly to `Host` with structured objects; `NetworkClient` owns browser WebSocket reconnection and serialization.
-- View controllers render snapshots and translate user interactions into named actions without knowing which transport is active.
-- Template utilities create reusable room rows and opponent panels.
-- The `PlayingCard` custom element owns card rendering, face state, accessibility, and drag interaction through explicit method APIs.
-- `DomUtils`, `ValidationUtils`, and `NotificationUtils` provide common contracts rather than repeating validation, normalization, or DOM-state logic.
+## 5. Room lifecycle and membership
 
-The client does not normalize different player variants. Every player has one DTO shape, and `localPlayerName` identifies the local player in a Room data object.
+### 5.1 Actions
 
-### 2.2 Host and runtime responsibilities
-
-- `Host` registers core `Room` instances and peers, routes actions, throttles requests, sends notifications, runs bot turns, and closes abandoned rooms.
-- Host profiles describe Local or Network capabilities without duplicating orchestration.
-- Host storage has only `load`, `save`, and `remove`, and persists serializable custom-room definitions rather than live core objects.
-- `Browser` supplies localStorage and fills custom Local rooms immediately; configured default rooms keep only their configured bot players.
-- `Network` supplies HTTP/WebSocket transport, heartbeat maintenance, and an injectable storage adapter. Network custom rooms do not auto-fill with bots.
-- `Room` serializes state-changing operations, enforces membership and Pick 2 rules, advances turns, manages idle players, and completes rounds.
-- `Player` contains player state; `BotPlayer` contains automated-player card selection.
-- `PlayerCircle` maintains circular turn links, direction, and the nullable turn-owner cursor.
-- `Card`, `Deck`, and `Hand` implement the card domain and collection behavior.
-- `StateMapper` is the boundary between serialized domain state and stable client-facing DTOs.
-- `Serializable` converts domain models and nested collections into plain transport-safe values.
-
-## 3. Shared sources of truth
-
-`core/Constants.js` is deliberately shared by both modes and the Host. It owns:
-
-- action names;
-- room-lifecycle, connection, and notification statuses;
-- initial hand size, room player limit, default `Room` definitions, local bot names, and idle duration;
-- standard values, standard suits, joker suits, rank/value/suit/score sort options, and score overrides;
-- card score calculation;
-- reusable emoji groups and random emoji selection.
-
-Card scoring must always use `Constants.getCardScore(value, suit)`. New action or status strings must be added to `Constants` before they are used elsewhere.
-
-Generic development validation belongs in the shared assertion and normalization utilities. A domain class should retain local validation only when it applies domain policy or translates invalid user input into a user-facing notification.
-
-## 4. Runtime lifecycle
-
-### 4.1 Startup
-
-1. The browser loads `main.js` from either the Home page or the Room page.
-2. Local mode constructs `Client → Browser → Host`, seeds the Rooms defined by `Constants.DEFAULT_ROOMS`, and works on any static host.
-3. When Network mode is selected, Home shows the connection view while it probes the configured WebSocket host.
-4. Network mode constructs `Client → NetworkClient`; Node adapts the socket to the same `Host.open` API.
-5. When Node is running, `server.js` starts `Network`, registers `/health`, serves the shared Home and Room pages and assets, creates default rooms, and starts heartbeat maintenance.
-
-### 4.2 Room membership
-
-The public Home and Room vocabulary is consistent across constants, routing,
-and controller operations. Each room is backed by a core `Room`:
-
-- **list** returns Home's `rooms` directory;
-- **create** creates a Room and joins its first Player;
-- **view** opens an existing Room without joining as a Player;
-- **join** adds the client as a Player, including after `view`;
-- **leave** removes the client from the Room and returns it to Home.
-
-Joining is locked while the underlying `Room` is playing or awaiting a suit declaration. Viewers and Players may leave at any time. Player names are unique within a Room, and playerLimit applies only to Player seats.
-
-### 4.3 Room flow
-
-1. Starting requires at least two players.
-2. The `Room` creates and shuffles the deck, deals seven cards per player, chooses a valid initial discard, and selects the first player.
-3. The turn owner may draw, discard, or pass subject to `Room` rules.
-4. Draw and pass actions permanently commit the player's selected hand sort. A discard commits the order while removing the selected card.
-5. A newly drawn card resets the client's temporary sort to `none`, so it is visibly new until the player sorts again.
-6. Suit-changing aces move the `Room` to `pending` until the turn owner declares a standard suit.
-
-While a `Room` is `waiting`, `circle.turnOwnerKey` is `null`. With no turn owner, any seated player may draw one card or discard a card without turn-order or discard-legality checks. Starting the `Room` assigns a random turn owner; resetting to `waiting` clears the cursor again.
-7. Emptying a hand or playing the seven of hearts finishes the playing round.
-8. Remaining hand scores determine the winner or tied winners.
-
-Card rules and round-finish rules are enforced only while the `Room` is actively playing. Outside play, any card may be placed on any other card.
-
-In Local mode, leaving an owned custom Room ends its browser-local `Room` and
-returns to Home. User-created room entries are removed when their player leaves,
-while rooms backed by the shared `Constants.DEFAULT_ROOMS` configuration
-remain available. A seated Local player can select `Play` from either `waiting`
-or `finished`, so completed rounds restart without creating a new Room.
-
-### 4.4 Idle and empty-room cleanup
-
-In Network mode, when a Player exceeds `Constants.MAX_IDLE_MS`, the Host removes that Player while leaving the client in viewing state, then sends a notification. If no Players remain, the Host schedules an empty-room check for another `MAX_IDLE_MS`. Local mode disables idle monitoring because its lifecycle is owned by the browser page.
-
-## 5. Room protocol
-
-### 5.1 Client request
-
-Local and Network requests contain an `action` from `Constants.ACTIONS` and a `data` object. `Client` adds the browser-tab identity and current hand sort key before delegating to either endpoint.
-
-Requests that identify a Room use `data.roomName`. The browser route uses the
-matching `room` query key: `room.html?mode=<local-or-network>&room=<room-name>`.
-
-Supported action families are:
+The public action set is defined by `Constants`:
 
 | Area | Actions |
 | --- | --- |
-| Home and Room membership | `list`, `create`, `view`, `join`, `leave` |
+| Directory and membership | `list`, `create`, `view`, `join`, `leave` |
 | Play | `start`, `draw`, `discard`, `pass`, `declare` |
 
-Action handlers validate Room ownership in the Host. A client-provided name never grants control of another player's Room.
+The Host MUST validate the Room and Player context for every action. A
+client-provided name, tab identifier, or room key MUST NOT grant authority over
+another participant or Room.
 
-### 5.2 Response
+### 5.2 Membership rules
 
-Both modes use the envelope produced by `StateMapper.toResponse`:
+- `list` returns the Home directory.
+- `create` creates a Room and joins its first Player.
+- `view` opens an existing Room without taking a seat. A successful new viewer
+  updates `Room.lastActiveAt`.
+- `join` adds a Player and removes that tab from the viewer set when applicable.
+  Joining is allowed only while the Room is waiting or finished, according to
+  the host profile and current lifecycle rules. Joining updates both the new
+  Player's activity and the Room's activity.
+- `leave` removes the current participant and returns the client to Home.
+- A Player may move to viewing state. This updates Room activity and refreshes
+  idle monitoring for the remaining eligible Players.
+- A Viewer may leave at any time. Removing a viewer updates Room activity only
+  when a viewer was actually removed.
+
+Starting requires at least two Players. In Direct mode, leaving an owned custom
+Room ends that browser-owned Room and returns Home; configured default Rooms
+remain available. A finished Direct Room may be restarted without creating a new
+Room.
+
+### 5.3 End-to-end flows
+
+#### Entering a Room as a Player
+
+1. The client loads Home and requests the current Room directory.
+2. The user creates a Room or selects an existing Room to view.
+3. The client navigates to the Room page and requests a Room snapshot.
+4. The user submits a valid Player name. The Host verifies the Room, seat
+   capacity, name uniqueness, and membership state.
+5. The Room adds the Player, removes that tab from its viewer set, updates the
+   Player and Room activity timestamps, and returns the updated Room snapshot.
+6. The Host sends the Player welcome notification after the state response.
+7. If the Room now satisfies the start requirement, the Player may start the
+   round.
+
+#### Viewing a Room
+
+1. The client requests an existing Room without a Player name.
+2. The Host registers the tab as a Viewer and returns the Room snapshot.
+3. The Room updates `Room.lastActiveAt` when the tab becomes a new Viewer.
+4. The Viewer may later join if membership is unlocked, or leave and return to
+   Home without becoming a Player.
+
+#### Starting and playing a round
+
+1. A Player requests `start`; the Host verifies ownership and the minimum
+   Player count.
+2. The Room resets round state, shuffles and deals the cards, selects the
+   initial discard and turn owner, changes to `playing`, records Room activity,
+   and establishes idle monitoring.
+3. The current human turn owner requests `draw`, `discard`, or `pass`.
+4. The Room validates the action, applies its card and turn rules, updates the
+   acting Player and Room activity, advances the turn when required, and
+   refreshes monitoring.
+5. The Host broadcasts the resulting Room snapshot. If the next turn belongs
+   to a Bot, the Host continues the automated turn before returning to normal
+   human interaction.
+6. A suit-changing card changes the Room to `pending`; only its turn owner may
+   declare the suit. Declaration returns the Room to `playing` and advances the
+   turn.
+7. When a round-ending condition occurs, the Room records winners and scores,
+   changes to `finished`, and stops active-turn monitoring.
+
+#### Idle Player and empty-room cleanup
+
+1. The Host monitors only the eligible human Players defined in the activity
+   policy. Monitoring is transferred whenever the Room state or turn owner
+   changes.
+2. When the monitored Player exceeds the idle duration, the Host moves that
+   Player to viewing state, updates Room activity, and sends the affected client
+   a warning together with the updated Room snapshot.
+3. If no Players remain, the Host leaves the Room available during one grace
+   interval and schedules a second empty-room check.
+4. If a Player rejoins before the check, the Room remains available; when the
+   check runs it observes that the Room is no longer empty and does not close
+   it.
+5. If the Room is still empty when the check expires, the Host unregisters and
+   removes it, then sends affected Room clients a combined Home snapshot and
+   `Room closed` warning. Those clients navigate to Home and display the
+   warning.
+
+#### Leaving and returning Home
+
+1. A Player or Viewer requests `leave`, or the transport closes and the Host
+   removes the client from its Room membership.
+2. The Room removes the participant, recycles a departing Player's hand when
+   applicable, updates Room activity, and refreshes idle monitoring.
+3. The Host continues a Bot turn if the Room remains valid; otherwise it starts
+   or performs empty-room cleanup.
+4. The departing client receives Home state and no longer controls the Room.
+
+#### Hosted reconnect
+
+The Hosted client reports connection state separately from Room state. A
+reconnecting browser MUST re-establish its endpoint before issuing Room actions
+and MUST use a fresh authoritative snapshot rather than assuming that a prior
+snapshot is still current. The Host remains the source of truth for
+membership, turns, activity, and cleanup during the disconnect.
+
+### 5.4 Room states
+
+- **waiting**: no active turn is required; `turnOwnerKey` is null. Seated
+  Players may perform the waiting-state actions allowed by the core rules.
+- **playing**: ordinary turn order and card legality apply.
+- **pending**: play is paused while the current turn owner declares a standard
+  suit after a suit-changing card.
+- **finished**: the round has ended and winners/scores are available.
+
+State transitions MUST clear or establish the turn-owner cursor consistently.
+Starting or resetting a round establishes a valid owner; returning to waiting
+clears it.
+
+## 6. Activity and idleness policy
+
+### 6.1 Ownership of activity
+
+`Player.lastActiveAt` measures activity for one seated Player. It is used to
+decide whether that Player is idle. `Room.lastActiveAt` measures activity for
+the Room and is used for room-level recency and empty-room cleanup.
+
+`PlayerCircle` MUST NOT track activity. Turn order is not activity, and adding
+timestamps to the circle would duplicate ownership and create inconsistent
+state.
+
+### 6.2 What updates activity
+
+A successful Player action MUST update both the acting Player and the Room.
+This includes drawing, discarding, passing, and declaring a suit. Starting or
+resetting a round also establishes fresh activity for the relevant lifecycle.
+
+Viewer activity MUST update only `Room.lastActiveAt`. A viewer becoming a
+Player MUST update the new `Player.lastActiveAt` and `Room.lastActiveAt`.
+Joining, leaving a viewer, and moving a Player to viewing state update Room
+activity when the membership change actually occurs.
+
+Failed actions MUST NOT be treated as successful Player activity. Internal
+state-reset transitions may refresh timestamps when they establish a new
+monitoring window; they MUST NOT introduce a separate circle timestamp.
+
+### 6.3 Who is monitored
+
+Hosted idle monitoring uses `Constants.MAX_IDLE_MS` (currently 30 seconds).
+Bots are never monitored because the host advances automated turns promptly.
+
+- While the Room is **playing** or **pending** and has a turn owner, only the
+  current human turn owner is monitored.
+- While the Room is **waiting**, every human Player is monitored.
+- Players who are not eligible under the current state MUST have idle
+  monitoring stopped.
+- When the monitored set changes, each newly monitored Player begins a fresh
+  idle window. Advancing a turn therefore transfers the monitoring window to
+  the new human owner.
+
+An idle human Player is demoted to viewing state, not silently deleted from the
+Room interaction. The affected client MUST receive a warning notification. If
+the demotion leaves the Room with no Players, the Host starts a grace-period
+empty-room check for another `MAX_IDLE_MS`.
+
+When the empty-room check expires and the Room is still empty, the Host MUST
+close and unregister the Room. Direct mode disables automatic idle monitoring;
+its lifecycle is owned by the browser page.
+
+## 7. Game rules and round behavior
+
+Starting creates and shuffles a deck, deals seven cards to each Player, chooses
+a valid initial discard, and selects the first turn owner. The turn owner may
+draw, discard, or pass only when the action is legal for the current state.
+
+While playing, turn order, draw penalties, discard legality, skip/reverse
+effects, and suit declarations are authoritative core rules. A suit-changing
+ace moves the Room to pending until its owner declares a standard suit.
+
+While waiting with no turn owner, the waiting-state permissions apply and
+playing-only legality checks do not. A round finishes when a hand is emptied or
+the seven of hearts ends the round under its rule. Remaining hand scores
+determine the winner or tied winners.
+
+Hand sorting is committed with the next draw, discard, or pass. Temporary
+browser sorting is not a server-side action for every selection. Drawing resets
+the temporary client sort to `none` so newly drawn cards are visibly distinct
+until the Player sorts again.
+
+All scoring MUST use the shared card-score policy in `Constants`; no UI or bot
+may calculate a competing score.
+
+## 8. Automated Players
+
+Bots use the same legal action and card rules as human Players. Their strategy
+MAY use their own cards, public turn order, visible hand counts, card effects,
+and discard history. It MUST NOT inspect opponents' hidden card identities or
+private hand scores.
+
+Because discarded cards may return to the deck when the discard pile is
+recycled, bot decisions MUST use the live public discard pile rather than a
+permanent assumption that a discarded card is unavailable.
+
+Bot heuristics may estimate responses, urgency, suit strength, and the value of
+ending a round, but those estimates are subordinate to authoritative Room
+legality. A strategy change requires focused tests for both the chosen behavior
+and the unchanged legality boundary.
+
+## 9. Client/server contract
+
+Requests contain an action and data object. The client adds the per-tab
+identifier and current temporary hand sort before sending. Room requests use
+`data.roomName`; browser navigation uses:
+
+```text
+room.html?mode=<direct-or-hosted>&room=<room-name>
+```
+
+Responses use one envelope in both modes:
 
 ```js
 {
@@ -153,138 +322,105 @@ Both modes use the envelope produced by `StateMapper.toResponse`:
 }
 ```
 
-The first meaningful statement is placed in `title`; the body contains only the remaining message so notifications do not repeat their opening text.
+`view` identifies the state destination. `data` is the authoritative snapshot.
+`message` is an optional user-facing notification. A response MAY contain both
+`data` and `message`; clients MUST process the state transition and notification
+together rather than dropping the notice.
 
-### 5.3 Home and Room data
+When a Room closes, affected Room clients receive Home data and a `Room closed`
+warning with `No players remain.` They MUST navigate to Home and display that
+warning. This is a single state transition, not a stale Room followed by a
+separate best-effort redirect.
 
-The Home data exposes its directory through one stable list key:
+Home room summaries include `roomName`, `status`, `playerCount`, `playerLimit`,
+`viewerCount`, `lastActiveAt`, and `createdAt`. Room data includes the same
+metadata plus `localPlayerName`, circle turn data, discard pile, deck count,
+winners, scores, and suit-selection state.
 
-```js
-{
-    rooms: [
-        {roomName, status, playerCount, playerLimit, viewerCount, lastActiveAt, createdAt}
-    ]
-}
-```
+The browser-safe circle contains `players`, `playerLimit`, `turnOwnerKey`, and
+`direction`. It MUST NOT contain `createdAt` or `lastActiveAt`. Each player DTO
+has one stable shape with `key`, `name`, `hand`, `drawAllowance`, and
+`isWinner`; card count is derived from `hand.cards.length`.
 
-The Room data contains Room metadata, `localPlayerName`, a browser-safe `circle`,
-discard pile, deck count, winners, scores, and suit-selection state. The circle
-preserves the core `Room` ownership field names and nesting:
+## 10. Notifications and failures
 
-```js
-{
-    players,
-    playerLimit,
-    turnOwnerKey,
-    direction
-}
-```
+`UserNotification` is for expected, actionable conditions such as an invalid
+name, full Room, illegal play, or acting out of turn. It becomes an
+informational or warning notification suitable for the user.
 
-Both Host and browser code use the shared `TurnUtils.hasTurnOwner(turnOwnerKey)` and `TurnUtils.isTurnOwner(turnOwnerKey, playerKey)` predicates. No derived ownership aliases are added to the wire data. Each browser-safe player consistently has:
+Development failures, malformed contracts, impossible domain state, invalid
+internal card values, and syntax or infrastructure defects MUST remain ordinary
+errors. The runtime sends a generic server-error notification while preserving
+the original error for logging and diagnosis. Do not convert a development
+failure into `UserNotification` merely to avoid handling it.
 
-```js
-{
-    key,
-    name,
-    hand: {
-        cards,
-        score,
-        sortKey
-    },
-    drawAllowance,
-    isWinner
-}
-```
+The notification title contains the first meaningful statement. The message
+body contains only the remaining detail, preventing duplicated opening text.
 
-The browser finds the local Player by comparing `localPlayerName` with `player.name`. Viewers have no local Player match. Card count remains derived from `player.hand.cards.length` on both sides.
+## 11. UI, accessibility, and presentation contracts
 
-Boolean fields and boolean DOM dataset states use `is` names, such as `isWinner`, `data-is-turn-owner`, `data-is-selected`, and `data-is-face-down`.
+- The default CSS presentation is mobile-first.
+- One `min-width: 721px` stage serves tablet and desktop layouts; do not add
+  additional width breakpoints without documenting the need.
+- Shared foundations belong in the appropriate base stylesheet. Table
+  foundations belong in `ui/styles/table.css`.
+- Hovered or keyboard-focused table rows use translucent cyan. A selected row
+  uses solid cyan text without adding a background.
+- Mutable UI state uses existing `data-*` hooks and `DomUtils.setBooleanState`.
+- Non-decorative cards are keyboard and pointer flippable. Guide cards are not
+  draggable. Only cards in the local Player's hand are discardable, and the
+  discard-pile rectangle is the drop target.
+- Viewers do not receive Player-only start or result overlays.
+- When a local Player exists, displayed Player sequences begin with that Player
+  while preserving circle order.
+- Template paths MUST resolve through the shared UI root metadata so the same
+  pages work from a repository root and from a GitHub Pages subpath. Current
+  templates and styles live under `ui/`.
 
-## 6. Card and hand model
+## 12. Testing and verification
 
-A card DTO contains `value`, `suit`, `score`, and `rotation`. Standard cards use a standard suit; jokers use red or black joker suits.
-
-`Hand` owns `cards`, `score`, and the persisted `sortKey`. Its score updates whenever cards are added or removed. Card count is derived from `cards.length` rather than stored as duplicate domain state.
-
-Temporary browser sorting uses `CardSortUtils` and does not mutate the server for each selection. The sort key is sent with the player's next draw, discard, or pass, at which point the `Room` commits the order and resets the temporary selection.
-
-## 7. Automated-player policy
-
-The BotPlayer evaluates its own legal cards using only public room information: turn order, visible hand counts, card effects, and discard history. It never reads an opponent's card identities or hand score. For each candidate play, it subtracts its own cards and the current discard pile from the complete deck, then estimates the chance that the projected next player has a legal response. Opponent urgency rises sharply at three, two, and one remaining cards, so the BotPlayer begins applying pressure before the final-card emergency. It compares the actual players reached by ordinary, skip, and reverse candidates; prefers draw attacks that are unlikely to be countered; and favors plays with a lower estimated response probability.
-
-The BotPlayer also scores the structure of its remaining hand. It prefers candidate cards that leave more legal continuations and gives a decisive bonus to a two-player skip that returns a playable final card to itself. A suit-changing ace primarily declares the bot's strongest remaining suit. When multiple suits are equally strong, current discard history breaks the tie toward the suit with fewer unseen cards, reducing the estimated chance of an opponent response.
-
-The BotPlayer does not keep a duplicate per-opponent history. Discarded cards can return to the deck when the discard pile is recycled, so persistent memory would eventually treat playable cards as unavailable and make its estimates incorrect. It instead reads the live discard pile, which always represents the cards that are currently public and unavailable.
-
-The BotPlayer avoids spending the ace of spades when there is no draw attack, but uses legal defenses rather than accepting a draw penalty based on hidden knowledge. For the seven of hearts, it finishes immediately when that empties its hand. Otherwise, it considers ending only when the discard leaves it with fewer cards than every opponent. It then uses the scores of unseen cards and each opponent's visible card count to estimate the chance that its remaining score will tie or beat every opponent, ending the game only when that estimate reaches the configured confidence threshold. After an opponent discards the three of a standard suit—the lowest ordinary card—the BotPlayer treats that suit as potentially exhausted and prefers to continue pressing it only when the candidate card would make that same opponent the next actor.
-
-These decisions remain subordinate to the same `Room` and `Card` legality rules used for human players.
-
-## 8. Client interaction rules
-
-- Non-decorative cards may be flipped with a click or the keyboard.
-- Gameplay cards can begin a drag interaction; guide cards explicitly set `isDraggable: false` so they remain readable and flippable without becoming drag sources.
-- Only cards in the local player's hand receive the discardable state and can be dropped onto the discard pile.
-- The entire discard-pile rectangle is the drop target.
-- A drag clone is appended to `body`, so its size is calculated from the rendered source card instead of inheriting body-level container-query dimensions. `Constants.CARD.DRAG_CLONE_SCALE` controls the clone-to-source ratio; `.25` means one-quarter size. The pointer offsets use the same scale to keep the clone anchored at the same relative point.
-- Viewers do not receive player-only start or results overlays.
-- The results table selects a player and displays that player's remaining cards.
-
-HTML initializes mutable `data-*` states so the initial component contract is visible in the markup. Runtime boolean dataset assignments go through `DomUtils.setBooleanState`.
-
-## 9. Error and notification policy
-
-`UserNotification` represents an expected, actionable game condition, such as an unavailable name, an illegal play, or acting out of turn. The server converts it into an informational or warning message for the user.
-
-Development failures—invalid internal card values, impossible model state, malformed code contracts, syntax errors, and similar defects—remain ordinary `Error` instances. The server sends a generic server-error notification and allows the error to reach logging so its stack trace remains available.
-
-Do not replace development errors with `UserNotification`; players cannot take useful action on those failures.
-
-## 10. Styling and responsive design
-
-The interface is mobile-first. Unqualified rules define the mobile presentation, and one `min-width: 721px` stage serves both tablets and desktops. Common spacing, radius, and control dimensions are inherited through shared custom properties and container rules.
-
-Stylesheets are organized in page order and by responsibility:
-
-- `base.css`: shared design tokens, document structure, typography, controls, header, footer, focus, and motion defaults;
-- `home.css`: Home page, room directory, and connection-view layout;
-- `room.css`: active Room layout, players, opponents, and guide;
-- `playing-card.css`: card containers and card faces;
-- `table.css`: tabular information;
-- `overlays.css`: alerts, countdown, suit selection, and room results.
-
-## 11. Testing
-
-The project uses `node:test` and `node:assert/strict`. Run `npm test` before completing a change. Use `npm run test:coverage` when reviewing untested branches.
-
-Tests are grouped by domain:
+Run `npm test` before completing a change. Use `npm run test:coverage` when
+reviewing branch coverage. Focused tests belong at the lowest stable layer:
 
 - `card.test.js`: constants, scoring, card rules, and shared client utilities;
-- `collections.test.js`: deck, hand, sorting, and player-circle behavior;
+- `collections.test.js`: deck, hand, sorting, and PlayerCircle behavior;
 - `infrastructure.test.js`: serialization, state mapping, and throttling;
-- `room.test.js`: membership, lifecycle, game flow, and bot choices;
-- `user-notification.test.js`: expected versus developmental error classification.
+- `room.test.js`: membership, lifecycle, activity, idle monitoring, game flow,
+  and bot choices;
+- `user-notification.test.js`: expected versus developmental error handling;
+- `local-game.test.js` and `network-connection.test.js`: page structure,
+  routing, transport, and deployment-facing contracts.
 
-New behavior should receive a focused regression test at the lowest stable layer. Pure CSS fixes should be verified in both responsive stages because the Node suite does not perform visual layout testing.
+Any change to activity policy MUST test Player and Room timestamps, monitored
+human selection by lifecycle state, bot exclusion, demotion notification, and
+empty-room closure. Any change to shared markup or CSS MUST be checked against
+both `index.html` and `room.html`, including the mobile and 721px presentations.
 
-## 12. Extension guidelines
+## 13. Extension rules
 
-When adding a feature:
+1. Add shared actions, statuses, card values, timing, or scores to
+   `core/Constants.js` first.
+2. Put authoritative domain policy in `core/Room`, `core/Player`, or the
+   relevant card model; keep coordination in `runtime/Host`.
+3. Add or update the stable DTO in `core/StateMapper`; do not create parallel
+   client shapes.
+4. Validate Room, Player, Viewer, and ownership context in the Host before
+   dispatching an action.
+5. Reuse existing controller, template, validation, notification, sorting, and
+   DOM-state patterns.
+6. Preserve semantic markup, `data-*` state hooks, accessibility relationships,
+   and the repository's CSS cascade standards.
+7. Add tests for valid behavior, expected user failures, and important internal
+   contract failures.
+8. Update this document, the README, and the in-page guide whenever public
+   behavior, policy, or operational behavior changes.
 
-1. Add shared action, status, card, timing, or score values to `Constants`.
-2. Put authoritative game policy in the core domain, normally `Room`, `Player`, or `Card`; put orchestration in `Host`.
-3. Add or update the stable DTO in `StateMapper`; do not make controllers normalize competing data shapes.
-4. Route a named action through `Host` and validate its Room/Player context.
-5. Use an existing controller API pattern for the client interaction.
-6. Initialize mutable HTML dataset state in the markup.
-7. Reuse shared validation, notification, sorting, and DOM utilities.
-8. Add tests for valid behavior, expected user failures, and important internal-contract failures.
-9. Update this document, the README, and the in-page guide when rules or public behavior change.
+## 14. Operations
 
-## 13. Operational notes
-
-- Default port: `8080`, overridden with `PORT`.
-- Health check: `GET /health`.
-- Graceful shutdown handles `SIGINT` and `SIGTERM` and closes connections before exit.
-- Uncaught exceptions and unhandled promise rejections are logged and trigger Network shutdown because host state may be unsafe.
-- The application is proprietary. See the README copyright and license notice.
+- Default Node port: `8080`; override with `PORT`.
+- Health endpoint: `GET /health`.
+- Node serves `/` from `index.html` and `/room.html` from `room.html`.
+- Graceful shutdown handles `SIGINT` and `SIGTERM` and closes connections.
+- Uncaught exceptions and unhandled promise rejections are logged and trigger
+  Network shutdown because host state may be unsafe.
+- The application is proprietary; see the README copyright and license notice.

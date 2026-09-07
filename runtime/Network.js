@@ -42,7 +42,7 @@ export class Network {
 
         const port = Network.#resolvePort(config.port);
         this.#host = new Host(new HostConfig(
-            "network",
+            "hosted",
             0,
             true,
             true,

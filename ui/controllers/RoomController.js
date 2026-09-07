@@ -16,7 +16,7 @@ import { RoomRowUtils } from "../utilities/RoomRowUtils.js";
 import { SuitSelectionController } from "./SuitSelectionController.js";
 import { ViewController } from "./ViewController.js";
 
-/** Controls the active Room for both Local and Network play. */
+/** Controls the active Room for both Direct and Hosted play. */
 export class RoomController extends ViewController {
     /** @type {Object|null} */
     #room = null;
@@ -124,9 +124,16 @@ export class RoomController extends ViewController {
     }
 
     /** Leaves the current room. */
-    #leave() {
+    #leave(event) {
+        event.preventDefault();
         this.#isLeaving = true;
-        this.client?.request(Constants.ACTIONS.LEAVE, {});
+        const requestAccepted = this.client?.request(Constants.ACTIONS.LEAVE, {}) === true;
+
+        if (requestAccepted) {
+            this.#homeHandler?.(null);
+        } else {
+            this.#isLeaving = false;
+        }
     }
 
     /** Starts copying the current Network invite. */
@@ -151,14 +158,14 @@ export class RoomController extends ViewController {
         this.client?.request(action, this.#intent.data);
     }
 
-    /** Renders Room data received from the endpoint. @param {string} view @param {Object} data */
-    handleData(view, data) {
+    /** Renders endpoint data and handles Room-to-Home transitions. */
+    handleData(view, data, message = null) {
         if (view === Constants.VIEWS.ROOM) {
             this.#capabilities = ValidationUtils.object(data.capabilities, "Capabilities");
             this.#readyHandler?.(data);
             this.render(data);
-        } else if (view === Constants.VIEWS.HOME && this.#isLeaving) {
-            this.#homeHandler?.(null);
+        } else if (view === Constants.VIEWS.HOME && (this.#isLeaving || message !== null)) {
+            this.#homeHandler?.(message);
         }
     }
 
@@ -293,7 +300,7 @@ export class RoomController extends ViewController {
         const idleWarning = document.querySelector("#player-idle-warning");
 
         if (idleWarning instanceof HTMLElement) {
-            idleWarning.hidden = room.mode === "local";
+            idleWarning.hidden = room.mode === "direct";
         }
     }
 
@@ -326,7 +333,7 @@ export class RoomController extends ViewController {
 
         const base = new URL("../", location.href);
         const url = new URL("room.html", base);
-        url.searchParams.set("mode", "network");
+        url.searchParams.set("mode", "hosted");
         url.searchParams.set("room", this.#room.roomName);
 
         try {

@@ -19,7 +19,7 @@ export class Constants {
     static COUNTDOWN_SECONDS = 5;
 
     /**
-     * Maximum time allowed for a Network-mode availability check.
+     * Maximum time allowed for a Hosted-mode availability check.
      */
     static NETWORK_CONNECTION_TIMEOUT_MS = 3 * 1000;
 
@@ -34,12 +34,12 @@ export class Constants {
     static ROOM_PLAYER_LIMIT = 4;
 
     /**
-     * Ordered display names for local bot opponents.
+     * Ordered display names for Direct bot opponents.
      */
-    static LOCAL_OPPONENT_NAMES = Object.freeze(["CM", "XC", "VI"]);
+    static DIRECT_OPPONENT_NAMES = Object.freeze(["CM", "XC", "VI"]);
 
     /**
-     * Default rooms available in Local and Network registries.
+     * Default rooms available in Direct and Hosted registries.
      */
     static DEFAULT_ROOMS = Object.freeze([
         Object.freeze({roomName: "Default-S0", playerLimit: 4, botCount: 3}),

@@ -6,9 +6,10 @@
 
     <title>Pick 2 Game</title>
 
-    <meta name="description" content="Play Pick 2 in a Local or shared Network game.">
+    <meta name="description" content="Play Pick 2 in a Direct or shared Hosted game.">
     <meta name="robots" content="noindex, follow">
     <meta name="pick-2-shared-root" content="./ui/">
+    <!-- Set to the separate Hosted server origin for GitHub Pages deployments; empty uses this page's origin. -->
     <meta name="pick-2-server-origin" content="">
 
     <link rel="stylesheet" href="ui/styles/base.css">
@@ -57,9 +58,9 @@
                 </table>
             </div>
             <nav id="room-actions" aria-label="Room controls">
-                <button id="leave-button">Leave</button>
-                <button id="join-button" hidden>Join</button>
-                <button id="invite-button" hidden>Invite</button>
+                <button id="leave-button" type="button">Leave</button>
+                <button id="join-button" type="button" hidden>Join</button>
+                <button id="invite-button" type="button" hidden>Invite</button>
             </nav>
         </header>
         <article id="play-area" aria-label="Room table" data-status="waiting" data-is-player-view="false">
@@ -92,7 +93,7 @@
             <details>
                 <summary><b>01</b><span>Quick start</span></summary>
                 <div>
-                    <article><b>Open a game</b><span>Create a Local game or view an available Network game.</span></article>
+                    <article><b>Open a game</b><span>Create a Direct game or view an available Hosted game.</span></article>
                     <article><b>Play the game</b><span>Select <em>Play</em>. Everyone receives seven cards.</span></article>
                     <article><b>Take your turn</b><span>Drag a card to the discard pile, draw when needed, or pass after drawing.</span></article>
                     <article><b>Use your cards</b><span>Select a card to flip it. Sort your hand locally until you move.</span></article>
@@ -156,7 +157,7 @@
         </nav>
         <small id="app-footer-note">
             <span>© <time id="copyright-year" datetime="2026">2026</time> Pick 2. All rights reserved.</span>
-            <span>Local and network play</span>
+            <span>Direct and hosted play</span>
         </small>
     </footer>
 </main>
@@ -166,7 +167,7 @@
 <aside id="alert-dialog" class="dialog-overlay" data-status="info" aria-labelledby="alert-title" aria-describedby="alert-message" hidden>
     <div class="dialog-panel">
         <header>
-            <i id="alert-icon" data-icon="info" aria-hidden="true"></i>
+            <span id="alert-icon" data-icon="info" aria-hidden="true"></span>
             <h1 id="alert-title"></h1>
         </header>
         <section id="alert-message"></section>

@@ -3,8 +3,8 @@
 Pick 2 is a shedding card game with two play modes built from the same pages,
 controllers, protocol, and game rules:
 
-- **Local:** browser-local rooms; custom rooms fill their open seats with bots.
-- **Network:** shared rooms for people, configured bot players, and viewers over WebSockets.
+- **Direct:** browser-owned rooms; custom rooms fill their open seats with bots.
+- **Hosted:** shared rooms for people, configured bot players, and viewers over WebSockets.
 
 The shared source folders are the only authoritative copies of card rules, bot
 behavior, common controllers, card rendering, styles, templates, and artwork.
@@ -20,7 +20,7 @@ behavior, common controllers, card rendering, styles, templates, and artwork.
 npm install
 ```
 
-## Run the Network host
+## Run the Hosted host
 
 ```bash
 npm start
@@ -33,8 +33,8 @@ available through `npm run dev`.
 
 The Home page and room directory start at the root `index.html`; an active Room
 and its guide live at `room.html`. Serve the repository root with any static
-web server. Local play is always available and is the default. The Home page
-enables Network mode when its configured WebSocket host is reachable.
+web server. Direct play is always available. The Home page
+enables Hosted mode when its configured WebSocket host is reachable.
 
 Publish the static deployment manually using the hosting provider and release
 process of your choice. This repository does not automatically publish changes
@@ -47,13 +47,13 @@ Search Console, submit `https://danieltongu.github.io/pick-2/sitemap.xml`, and
 request indexing for the canonical page. Search engines decide when and whether
 to index a page, so publication alone does not guarantee immediate appearance.
 
-Local and Network registries use the same `Constants.DEFAULT_ROOMS` definitions.
-Each browser tab runs its own Local match. User-created Local rooms appear in
+Direct and Hosted registries use the same `Constants.DEFAULT_ROOMS` definitions.
+Each browser tab runs its own Direct match. User-created Direct rooms appear in
 the Home room directory while active and are removed when their player leaves;
 rooms backed by the default `Room` definitions remain available with only
 their configured bot players, so any other seats remain open for humans. Player limit
 ranges from two to four and includes the human seat. A static host cannot share
-live state across browsers without Network mode.
+live state across browsers without Hosted mode.
 
 ## Test
 
@@ -69,15 +69,15 @@ Coverage reporting is available through `npm run test:coverage`.
 index.html              Shared Home page and room directory
 room.html               Shared active Room and guide
 core/                    Cards, collections, game rules, bot behavior, state mapping
-runtime/                Client, Host, browser and Network boundaries
+runtime/                Client, Host, browser and Hosted boundaries
 ui/                     Shared page controllers, styles, templates, and utilities
-server.js                Node Network runtime entry point
-test/                    Domain, protocol, local, and infrastructure tests
+server.js                Hosted Node runtime entry point
+test/                    Domain, protocol, direct, and infrastructure tests
 docs/                    Design and maintenance documentation
 ```
 
-The Home and Room controllers use one `Client` API. Local play connects it
-directly to the transport-neutral `Host`; Network play connects it through the
+The Home and Room controllers use one `Client` API. Direct play connects it
+directly to the transport-neutral `Host`; Hosted play connects it through the
 browser-only `NetworkClient` and Node-only `Network` boundary. Both return the
 same `{ view, message, data }` envelope.
 
@@ -94,7 +94,7 @@ templates, and artwork. Nothing is copied or generated.
 - Node.js, Express 5, and WebSockets through `ws`
 - Semantic HTML and mobile-first CSS
 - Node's built-in test runner
-- Static hosting with Local play and optional Network availability
+- Static hosting with Direct play and optional Hosted availability
 
 ## Documentation
 

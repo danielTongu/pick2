@@ -68,7 +68,7 @@
     transform: translateX(-50%);
     height: 100%;
     width: calc(var(--card-min-height) * 2);
-    border: 1px dashed rgba(255, 255, 255, .12);
+    border: 1px dashed color-mix(in srgb, var(--white) 12%, transparent);
     border-radius: 1rem;
 }
 
@@ -181,15 +181,16 @@ playing-card[data-is-draggable="false"] > .playing-card-drag-handle {
    ======================================== */
 
 playing-card {
+    --red: crimson;
     --symbol: "";
-    --color: black;
+    --color: var(--black);
     --card-rotation: 0deg;
     --corner-font-size: calc(var(--card-width) / 4);
     --center-symbol-size: calc(var(--card-height) / 1.7);
     --joker-font-size: calc(var(--card-width) / 7);
     --joker-size: 73%;
-    --card-back-primary: #c41e3a;
-    --card-back-secondary: #f0f0f0;
+    --card-back-primary: var(--red);
+    --card-back-secondary: var(--white);
     --card-back-pattern:
             repeating-linear-gradient(45deg, var(--card-back-secondary) 0 1px, transparent 1px 10px),
             repeating-linear-gradient(-45deg, var(--card-back-secondary) 0 1px, transparent 1px 10px),
@@ -198,8 +199,8 @@ playing-card {
     font-family: "Segoe UI", Roboto, system-ui, sans-serif;
     position: relative;
     vertical-align: top;
-    background: #FFFFFF; /* Same color as the joker image background */
-    border: 1px solid #1a1a1a;
+    background: var(--white); /* Same color as the joker image background */
+    border: 1px solid var(--black);
     box-shadow: none;
     color: var(--color);
 
@@ -280,13 +281,13 @@ playing-card[data-value="joker"]::after {
 playing-card[data-suit="hearts"],
 playing-card[data-suit="diamonds"],
 playing-card[data-suit="red"] {
-    --color: #c41e3a;
+    --color: var(--red);
 }
 
 playing-card[data-suit="clubs"],
 playing-card[data-suit="spades"],
 playing-card[data-suit="black"] {
-    --color: #1a1a1a;
+    --color: var(--black);
 }
 
 playing-card[data-suit="hearts"] {
@@ -320,7 +321,7 @@ playing-card::after {
     font-size: var(--corner-font-size);
     font-weight: 800;
     text-transform: uppercase;
-    text-shadow: 0 1px 1px rgba(255, 255, 255, .3);
+    text-shadow: 0 1px 1px color-mix(in srgb, var(--white) 30%, transparent);
     letter-spacing: -.02em;
 }
 
@@ -362,9 +363,9 @@ playing-card[data-is-dragging="true"] {
 
     position: relative;
     display: inline-block;
-    background: rgba(255, 255, 255, .08);
-    color: white;
-    background: var(--forest-soft);
+    background: color-mix(in srgb, var(--white) 8%, transparent);
+    color: var(--white);
+    background: var(--green);
     transition:
             background .3s ease,
             border-color .3s ease,
@@ -452,9 +453,9 @@ playing-card[data-is-dragging="true"] {
     }
 
     #card-draw-button {
-        border: 1px solid rgba(0, 0, 0, .2);
-        background: #f5f5f5;
-        color: #333;
+        border: 1px solid color-mix(in srgb, var(--black) 20%, transparent);
+        background: var(--white);
+        color: var(--gray);
     }
 }
 

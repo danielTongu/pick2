@@ -149,11 +149,11 @@ export class Client {
         }
 
         if (response.data !== null) {
-            this.#controller?.handleData?.(response.view, response.data);
+            this.#controller?.handleData?.(response.view, response.data, response.message);
             this.#onData?.(response.view, response.data);
         }
 
-        if (response.message !== null) {
+        if (response.message !== null && response.view !== Constants.VIEWS.HOME) {
             this.#controller?.handleNotification?.(response.message);
         }
     }

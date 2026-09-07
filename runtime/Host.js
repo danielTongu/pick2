@@ -15,7 +15,7 @@ import { RateLimit } from "./RateLimit.js";
 /** Explicit runtime configuration for one Host. */
 export class HostConfig {
     /**
-     * @param {string} mode - Runtime mode (`local` or `network`).
+     * @param {string} mode - Runtime mode (`direct` or `hosted`).
      * @param {string} customBots - Custom-room bot policy.
      * @param {boolean} trackIdle - Whether to monitor idle players.
      * @param {boolean} resetFinished - Whether finished rooms reset after publication.
@@ -202,7 +202,7 @@ export class Host {
 
     /** @returns {Object} Normalized Host profile. */
     static #normalizeProfile(config) {
-        const mode = config.mode === "local" ? "local" : "network";
+        const mode = config.mode === "direct" ? "direct" : "hosted";
 
         return Object.freeze({
             mode,
@@ -210,9 +210,9 @@ export class Host {
                 create: true,
                 join: true,
                 view: true,
-                invite: mode === "network",
-                botFill: mode === "local",
-                restart: mode === "local",
+                invite: mode === "hosted",
+                botFill: mode === "direct",
+                restart: mode === "direct",
             }),
             customBots: config.customBots === "fill" ? "fill" : 0,
             trackIdle: config.trackIdle === true,
@@ -269,7 +269,7 @@ export class Host {
         let index = 0;
 
         while (index < count && !room.isFull()) {
-            const baseName = Constants.LOCAL_OPPONENT_NAMES[index] ?? `Bot ${index + 1}`;
+            const baseName = Constants.DIRECT_OPPONENT_NAMES[index] ?? `Bot ${index + 1}`;
             const botName = humanName !== null &&
                 Player.normalizeKey(baseName) === Player.normalizeKey(humanName)
                 ? `${baseName} Bot`
@@ -416,13 +416,18 @@ export class Host {
      * @param {Object} peer - Client peer.
      * @param {Room} room - Room instance.
      * @param {string|null} playerName - Room player name.
+     * @param {Object|null} message - Optional notification sent with the state.
      */
-    #publishRoomState(peer, room, playerName) {
-        this.#publishViewState(peer, Constants.VIEWS.ROOM, Object.freeze({
-            ...StateMapper.toRoomData(room, playerName),
-            ...this.#getModeData(),
-            isBusy: false
-        }));
+    #publishRoomState(peer, room, playerName, message = null) {
+        this.#publish(peer, StateMapper.toResponse(
+            Constants.VIEWS.ROOM,
+            message,
+            Object.freeze({
+                ...StateMapper.toRoomData(room, playerName),
+                ...this.#getModeData(),
+                isBusy: false
+            })
+        ));
     }
 
     /**
@@ -650,13 +655,10 @@ export class Host {
                 if (this.#isCurrentClient(client)) {
                     client.playerName = null;
 
-                    this.#publish(client.peer, StateMapper.toResponse(
-                        Constants.VIEWS.ROOM, StateMapper.toMessage(
-                            Constants.STATUS.WARNING,
-                            "Moved to viewers",
-                            "You were idle."
-                        ),
-                        StateMapper.toRoomData(room, null)
+                    this.#publishRoomState(client.peer, room, null, StateMapper.toMessage(
+                        Constants.STATUS.WARNING,
+                        "Moved to viewers",
+                        "You were idle."
                     ));
 
                     this.#scheduleRoomClosureIfEmpty(roomKey);

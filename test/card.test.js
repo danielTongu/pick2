@@ -42,14 +42,14 @@ test("the Game API uses one-word actions", () => {
     assert.equal(Object.values(Constants.ACTIONS).every((action) => !action.includes("_")), true);
 });
 
-test("local opponent names are centralized and immutable", () => {
-    assert.equal(Object.isFrozen(Constants.LOCAL_OPPONENT_NAMES), true);
-    assert.equal(Constants.LOCAL_OPPONENT_NAMES.length, Constants.ROOM_PLAYER_LIMIT - 1);
+test("direct opponent names are centralized and immutable", () => {
+    assert.equal(Object.isFrozen(Constants.DIRECT_OPPONENT_NAMES), true);
+    assert.equal(Constants.DIRECT_OPPONENT_NAMES.length, Constants.ROOM_PLAYER_LIMIT - 1);
     assert.equal(
-        Constants.LOCAL_OPPONENT_NAMES.every((name) => typeof name === "string" && name.trim().length > 0),
+        Constants.DIRECT_OPPONENT_NAMES.every((name) => typeof name === "string" && name.trim().length > 0),
         true
     );
-    assert.equal(new Set(Constants.LOCAL_OPPONENT_NAMES).size, Constants.LOCAL_OPPONENT_NAMES.length);
+    assert.equal(new Set(Constants.DIRECT_OPPONENT_NAMES).size, Constants.DIRECT_OPPONENT_NAMES.length);
 });
 
 test("card-domain suit operations share canonical suit definitions", () => {

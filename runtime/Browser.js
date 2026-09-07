@@ -11,7 +11,7 @@ import { Host, HostChannel, HostConfig } from "./Host.js";
 
 /** Browser-only storage for serializable custom-room definitions. */
 class BrowserStore {
-    static #KEY = "pick2.localGames";
+    static #KEY = "pick2.directGames";
     #memory = new Map();
 
     /** @returns {Promise<Object[]>} Stored custom-room definitions. */
@@ -82,7 +82,7 @@ class BrowserStore {
 /** Direct browser endpoint for the shared transport-neutral Host. */
 export class Browser {
     #host = new Host(new HostConfig(
-        "local",
+        "direct",
         "fill",
         false,
         false,
@@ -117,7 +117,7 @@ class BrowserConnection {
      */
     constructor(host, events) {
         this.#events = events;
-        events.status?.("connecting", "Starting local room…");
+        events.status?.("connecting", "Starting direct room…");
         this.#peer = host.open(new HostChannel(
             this.#publish.bind(this),
             this.close.bind(this)
@@ -163,7 +163,7 @@ class BrowserConnection {
 
     #notifyOpen() {
         if (this.#isOpen) {
-            this.#events.status?.("connected", "Local");
+            this.#events.status?.("connected", "Direct");
             this.#events.open?.();
         }
     }

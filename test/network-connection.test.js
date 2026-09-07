@@ -50,9 +50,11 @@ function useBrowserState(serverOrigin, callback) {
 
 test("PageState normalizes configured and current Network hosts", () => {
     useBrowserState("", () => {
+        assert.equal(PageState.getModePreference(), null);
+        assert.equal(PageState.getMode(), "direct");
         assert.equal(PageState.getConfiguredServerOrigin(), null);
         assert.equal(PageState.getCurrentHostUrl(), "wss://example.test/");
-        assert.equal(PageState.getNetworkUrl(), "wss://example.test/");
+        assert.equal(PageState.getHostedUrl(), "wss://example.test/");
     });
 
     const cases = new Map([
@@ -65,38 +67,38 @@ test("PageState normalizes configured and current Network hosts", () => {
     for (const [origin, expectedUrl] of cases) {
         useBrowserState(`  ${origin}  `, () => {
             assert.equal(PageState.getConfiguredServerOrigin(), origin.trim());
-            assert.equal(PageState.getNetworkUrl(), expectedUrl);
+            assert.equal(PageState.getHostedUrl(), expectedUrl);
         });
     }
 
     useBrowserState("ftp://server.test", () => {
-        assert.throws(() => PageState.getNetworkUrl(), /Unsupported server protocol/);
+        assert.throws(() => PageState.getHostedUrl(), /Unsupported server protocol/);
     });
 });
 
 test("PageState stores and clears a verified Network host", () => {
     useBrowserState("https://server.test", () => {
-        PageState.setNetworkUrl("wss://local.test/");
-        assert.equal(PageState.getNetworkUrl(), "wss://local.test/");
-        PageState.clearNetworkUrl();
-        assert.equal(PageState.getNetworkUrl(), "wss://server.test/");
+        PageState.setHostedUrl("wss://direct.test/");
+        assert.equal(PageState.getHostedUrl(), "wss://direct.test/");
+        PageState.clearHostedUrl();
+        assert.equal(PageState.getHostedUrl(), "wss://server.test/");
     });
 });
 
 test("the embedded Network view checks configured and current hosts", () => {
-    const homeHtml = readFileSync(new URL("../room.html", import.meta.url), "utf8");
-    const main = readFileSync(new URL("../src/main.js", import.meta.url), "utf8");
-    const network = readFileSync(new URL("../src/runtime/Network.js", import.meta.url), "utf8");
+    const homeHtml = readFileSync(new URL("../index.html", import.meta.url), "utf8");
+    const main = readFileSync(new URL("../main.js", import.meta.url), "utf8");
+    const network = readFileSync(new URL("../runtime/Network.js", import.meta.url), "utf8");
     const styles = readFileSync(
-        new URL("../web/shared/styles/home.css", import.meta.url),
+        new URL("../ui/styles/home.css", import.meta.url),
         "utf8"
     );
     const controller = readFileSync(
-        new URL("../src/ui/NetworkConnectionController.js", import.meta.url),
+        new URL("../ui/controllers/NetworkConnectionController.js", import.meta.url),
         "utf8"
     );
     const networkClient = readFileSync(
-        new URL("../src/runtime/NetworkClient.js", import.meta.url),
+        new URL("../runtime/NetworkClient.js", import.meta.url),
         "utf8"
     );
     const headerPattern = /<header id="app-header">\s*<h1>\s*<a id="app-home-link"[\s\S]*?<span class="brand-mark"[\s\S]*?<span class="brand-copy">[\s\S]*?<\/h1>\s*<aside id="connection-status"/;
@@ -110,11 +112,13 @@ test("the embedded Network view checks configured and current hosts", () => {
     assert.match(homeHtml, /id="network-connection-view"[^>]+hidden/);
     assert.match(
         homeHtml,
-        /id="network-connection-view"[\s\S]*?<section>\s*<i id="network-connection-indicator"[\s\S]*?<output id="network-connection-message"/
+        /id="network-connection-view"[\s\S]*?id="network-connection-message"[\s\S]*?id="network-connection-origin"/
     );
-    assert.match(homeHtml, /id="network-connection-retry-button" hidden>Retry<\/button>/);
-    assert.match(homeHtml, /id="network-connection-use-host-button" hidden>Use this host<\/button>/);
-    assert.doesNotMatch(homeHtml, /id="network-mode-input"[^>]+disabled/);
+    assert.match(homeHtml, /id="network-connection-form"/);
+    assert.match(homeHtml, /id="network-connection-origin" type="url"/);
+    assert.match(homeHtml, /id="network-connection-connect-button" type="submit"/);
+    assert.doesNotMatch(homeHtml, /network-connection-(?:retry|use-host)-button/);
+    assert.doesNotMatch(homeHtml, /id="hosted-mode-input"[^>]+disabled/);
     assert.match(main, /new NetworkConnectionController\(\)/);
     assert.match(main, /DomUtils\.hide\(this\.#homeView\)/);
     assert.match(main, /networkController\.show\(\)/);
@@ -128,21 +132,30 @@ test("the embedded Network view checks configured and current hosts", () => {
     );
     assert.match(controller, /getConfiguredServerOrigin\(\)/);
     assert.match(controller, /PageState\.getCurrentHostUrl\(\)/);
-    assert.match(controller, /#retryButton\.addEventListener\("click"/);
-    assert.match(controller, /#useHostButton\.addEventListener\("click"/);
+    assert.match(controller, /#form\.addEventListener\("submit"/);
+    assert.match(controller, /PageState\.resolveHostedUrl\(origin\)/);
+    assert.doesNotMatch(controller, /#(?:retryButton|useHostButton)/);
     assert.match(controller, /new WebSocket\(this\.#networkUrl\)/);
     assert.match(controller, /Constants\.NETWORK_CONNECTION_TIMEOUT_MS/);
     assert.match(controller, /this\.#connectedHandler\?\.\(networkUrl\)/);
-    assert.match(main, /#networkController\.setConnectedHandler\(this\.#handleNetworkConnected\.bind\(this\)\)/);
-    assert.match(main, /PageState\.setNetworkUrl\(networkUrl\)/);
+    assert.match(main, /#networkController\.setConnectedHandler\(this\.#handleHostedConnected\.bind\(this\)\)/);
+    assert.match(main, /PageState\.setHostedUrl\(networkUrl\)/);
+    assert.match(main, /this\.#selectHosted\(true\)/);
+    assert.match(main, /fallbackToDirect && !isAvailable/);
+    assert.match(controller, /return false;/);
     assert.match(main, /statusHandler = this\.#handleNetworkStatus\.bind/);
     assert.match(main, /dataHandler = this\.#handleNetworkData\.bind/);
     assert.match(main, /view !== Constants\.VIEWS\.HOME/);
-    assert.match(controller, /reconnecting:[\s\S]*?Reconnecting to the table/);
-    assert.match(controller, /disconnected:[\s\S]*?Network disconnected/);
+    assert.match(styles, /#network-connection-title\s*\{[\s\S]*?color:\s*var\(--connection-accent\)/);
+    assert.match(styles, /#network-connection-title::before\s*\{[\s\S]*?display:\s*block/);
+    assert.match(styles, /#network-connection-view\[data-status="error"\][\s\S]*?#network-connection-title::before\s*\{[\s\S]*?content:/);
+    assert.match(styles, /#network-connection-view\[data-status="connecting"\][\s\S]*?#network-connection-message::before\s*\{[\s\S]*?content:/);
+    assert.match(styles, /#network-connection-view\[data-status="reconnecting"\][\s\S]*?content:/);
+    assert.match(styles, /#network-connection-view\[data-status="disconnected"\][\s\S]*?content:/);
+    assert.match(controller, /this\.#messageOutput\.dataset\.detail/);
     assert.match(
         styles,
-        /#network-connection-view > section\s*\{[\s\S]*?display:\s*grid;[\s\S]*?grid-template-columns:/
+        /\.network-connection-field\s*\{[\s\S]*?display:\s*grid;/
     );
     assert.match(networkClient, /isReconnecting \? "reconnecting" : "connecting"/);
     assert.match(networkClient, /#events\.status\?\.\("reconnecting", "Reconnecting…"\)/);
@@ -150,6 +163,8 @@ test("the embedded Network view checks configured and current hosts", () => {
         styles,
         /\[data-status="connecting"\][\s\S]*?\[data-status="reconnecting"\][\s\S]*?#network-connection-indicator[\s\S]*?animation:\s*network-connection-pulse/
     );
+    assert.match(styles, /#network-connection-view\[data-status="reconnecting"\]\s*\{[\s\S]*?--connection-accent:\s*var\(--orange\)/);
+    assert.doesNotMatch(styles, /box-shadow:\s*[^;]*0\s+0\s+0\s+25px/);
     assert.doesNotMatch(
         styles,
         /\[data-status="(?:connected|disconnected)"\][^{]*#network-connection-indicator\s*\{[^}]*animation:/

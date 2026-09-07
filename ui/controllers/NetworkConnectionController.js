@@ -76,14 +76,14 @@ export class NetworkConnectionController extends ViewController {
     /** @type {HTMLElement} */
     #messageOutput;
 
-    /** @type {HTMLElement} */
-    #originOutput;
+    /** @type {HTMLInputElement} */
+    #originInput;
 
     /** @type {HTMLButtonElement} */
-    #retryButton;
+    #connectButton;
 
-    /** @type {HTMLButtonElement} */
-    #useHostButton;
+    /** @type {HTMLFormElement} */
+    #form;
 
     /** @type {string|null} */
     #configuredUrl = null;
@@ -100,36 +100,40 @@ export class NetworkConnectionController extends ViewController {
     /** @type {number} */
     #attempt = 0;
 
-    /** @type {string|null} */
-    #retryUrl = null;
-
     constructor() {
         super("#network-connection-view");
         this.#connectionStatus = DomUtils.require("#connection-status", HTMLElement);
         this.#messageOutput = DomUtils.require("#network-connection-message", HTMLElement);
-        this.#originOutput = DomUtils.require("#network-connection-origin", HTMLElement);
-        this.#retryButton = DomUtils.require("#network-connection-retry-button", HTMLButtonElement);
-        this.#useHostButton = DomUtils.require(
-            "#network-connection-use-host-button",
-            HTMLButtonElement
-        );
+        this.#originInput = DomUtils.require("#network-connection-origin", HTMLInputElement);
+        this.#connectButton = DomUtils.require("#network-connection-connect-button", HTMLButtonElement);
+        this.#form = DomUtils.require("#network-connection-form", HTMLFormElement);
     }
 
     /** Binds the connection actions. */
-    /** Binds retry, host, and local-mode controls. */
+    /** Binds the editable host form. */
     initialize() {
-        this.#retryButton.addEventListener("click", this.#retry.bind(this));
-        this.#useHostButton.addEventListener("click", this.#useCurrentHost.bind(this));
+        this.#form.addEventListener("submit", this.#handleSubmit.bind(this));
     }
 
-    /** Retries the last attempted Network host. */
-    #retry() {
-        void this.connect(this.#retryUrl);
-    }
+    /** Connects to the address entered by the user. */
+    #handleSubmit(event) {
+        event.preventDefault();
+        const origin = this.#originInput.value.trim();
 
-    /** Tries the host currently serving the page. */
-    #useCurrentHost() {
-        void this.connect(this.#currentHostUrl);
+        if (origin === "") {
+            void this.connect(null);
+            return;
+        }
+
+        try {
+            void this.connect(PageState.resolveHostedUrl(origin));
+        } catch (error) {
+            this.render(
+                "error",
+                origin,
+                error instanceof Error ? error.message : String(error)
+            );
+        }
     }
 
     /** @param {Function} handler - Verified-host callback. */
@@ -144,7 +148,7 @@ export class NetworkConnectionController extends ViewController {
         this.#attempt += 1;
     }
 
-    /** @param {string|null} preferredUrl - Optional single host to retry. */
+    /** @param {string|null} preferredUrl - Optional single host to retry. @returns {Promise<boolean>} Whether a host is available. */
     async connect(preferredUrl) {
         const attempt = ++this.#attempt;
         this.#resolveHosts();
@@ -154,7 +158,7 @@ export class NetworkConnectionController extends ViewController {
 
         if (candidates.length === 0) {
             this.render("unconfigured", "", "");
-            return;
+            return false;
         }
 
         for (const networkUrl of candidates) {
@@ -162,17 +166,18 @@ export class NetworkConnectionController extends ViewController {
             const isAvailable = await NetworkConnectionController.#check(networkUrl);
 
             if (attempt !== this.#attempt) {
-                return;
+                return false;
             }
 
             if (isAvailable) {
                 this.render("connected", networkUrl, "");
                 this.#connectedHandler?.(networkUrl);
-                return;
+                return true;
             }
         }
 
         this.render("error", candidates.at(-1), this.#configurationError);
+        return false;
     }
 
     /** @param {string} networkUrl - WebSocket URL to check. */
@@ -188,7 +193,7 @@ export class NetworkConnectionController extends ViewController {
 
         if (configuredOrigin !== null) {
             try {
-                this.#configuredUrl = PageState.resolveNetworkUrl(configuredOrigin);
+                this.#configuredUrl = PageState.resolveHostedUrl(configuredOrigin);
             } catch (error) {
                 this.#configurationError = error instanceof Error
                     ? error.message
@@ -212,32 +217,6 @@ export class NetworkConnectionController extends ViewController {
      */
     /** Renders connection status and diagnostic text. @param {string} status @param {string} origin @param {string} detail */
     render(status, origin, detail) {
-        const content = {
-            connecting: {
-                title: "Reaching the table…",
-                message: "Checking the configured and local Pick 2 Network hosts."
-            },
-            reconnecting: {
-                title: "Reconnecting to the table…",
-                message: "The Network connection was interrupted. Trying the host again."
-            },
-            connected: {
-                title: "Network found",
-                message: "Connection confirmed. Refreshing Network rooms."
-            },
-            disconnected: {
-                title: "Network disconnected",
-                message: "Automatic reconnection stopped. Retry this host or return to Local mode."
-            },
-            error: {
-                title: "Could not reach a Network host",
-                message: detail || "Neither the configured host nor this site answered. Check the address or try this host again."
-            },
-            unconfigured: {
-                title: "No Network host is available",
-                message: "Open Pick 2 through its local app server or add a hosted address to pick-2-server-origin."
-            }
-        }[status];
         const statusLabel = {
             connecting: "connecting",
             reconnecting: "reconnecting",
@@ -250,20 +229,12 @@ export class NetworkConnectionController extends ViewController {
         this.root.dataset.status = status;
         this.#connectionStatus.dataset.status = status;
         this.#connectionStatus.setAttribute("aria-label", `Connection mode. Network ${statusLabel}.`);
-        DomUtils.requireChild(
-            this.root,
-            "#network-connection-title",
-            HTMLHeadingElement
-        ).textContent = content.title;
-        this.#messageOutput.textContent = content.message;
-        this.#originOutput.textContent = origin;
-        this.#originOutput.hidden = origin === "";
-        this.#retryUrl = origin || this.#configuredUrl;
+        this.#messageOutput.dataset.detail = detail || "";
+        if (origin !== "") {
+            this.#originInput.value = origin;
+        }
         const isPending = status === "connecting" || status === "reconnecting";
-        const isFailure = status === "disconnected" || status === "error" || status === "unconfigured";
-        this.#retryButton.hidden = !isFailure || this.#retryUrl === null;
-        this.#retryButton.disabled = isPending;
-        this.#useHostButton.hidden = !isFailure || this.#currentHostUrl === null;
-        this.#useHostButton.disabled = isPending;
+        this.#connectButton.disabled = isPending;
+        this.#connectButton.textContent = isPending ? "Connecting…" : "Connect to host";
     }
 }

@@ -18,7 +18,7 @@ import { OpponentUtils } from "../ui/utilities/OpponentUtils.js";
 import { TemplateUtils } from "../ui/utilities/TemplateUtils.js";
 
 const INDEX_HTML = readFileSync(new URL("../room.html", import.meta.url), "utf8");
-const OVERLAYS_CSS = readFileSync(new URL("../web/shared/styles/overlays.css", import.meta.url), "utf8");
+const OVERLAYS_CSS = readFileSync(new URL("../ui/styles/overlays.css", import.meta.url), "utf8");
 
 test("browser controller, custom element, and template utility families share their intended APIs", async () => {
     const OriginalHTMLElement = globalThis.HTMLElement;
@@ -256,12 +256,12 @@ test("RateLimit isolates scopes and supports reset, pruning, and validation", ()
     guard.reset("connection:tab");
     guard.enforceConnection({tabId: "tab"}, "sync", 1000);
     guard.enforcePlayerThrottle("player-tab", "move", 0);
-    guard.enforceSessionThrottle("room-key", "start", 0);
+    guard.enforceRoomThrottle("room-key", "start", 0);
     guard.prune(0);
     guard.resetAll();
 
     assert.throws(() => guard.enforcePlayerThrottle("", "move", 1), /cannot be empty/);
-    assert.throws(() => guard.enforceSessionThrottle("room", "move", -1), /non-negative integer/);
+    assert.throws(() => guard.enforceRoomThrottle("room", "move", -1), /non-negative integer/);
 });
 
 test("CardSortUtils supports every sort mode without mutating its input", () => {
@@ -281,7 +281,7 @@ test("CardSortUtils supports every sort mode without mutating its input", () => 
 });
 
 test("the shared guide initializes canonical card-sort options", () => {
-    const controller = readFileSync(new URL("../src/ui/GuideController.js", import.meta.url), "utf8");
+    const controller = readFileSync(new URL("../ui/controllers/GuideController.js", import.meta.url), "utf8");
 
     assert.match(INDEX_HTML, /<select id="card-sort-key-select"><\/select>/);
     assert.match(controller, /Constants\.CARD\.SORT_OPTIONS/);
@@ -289,7 +289,7 @@ test("the shared guide initializes canonical card-sort options", () => {
 });
 
 test("drag clones scale from the rendered card instead of the body container", () => {
-    const playingCard = readFileSync(new URL("../src/ui/PlayingCard.js", import.meta.url), "utf8");
+    const playingCard = readFileSync(new URL("../ui/PlayingCard.js", import.meta.url), "utf8");
 
     assert.match(playingCard, /Constants\.CARD\.DRAG_CLONE_SCALE/);
     assert.match(playingCard, /bounds\.height \* scale/);
