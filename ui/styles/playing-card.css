@@ -1,9 +1,3 @@
-/* public/styles/playing-card.css */
-
-/* ========================================
-   ROOT VARIABLES
-   ======================================== */
-
 :root {
     --card-aspect-ratio: 171 / 241;
     --card-min-height: 91px;

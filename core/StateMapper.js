@@ -1,4 +1,3 @@
-
 "use strict";
 
 import { Constants } from "./Constants.js";

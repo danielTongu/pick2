@@ -1,4 +1,3 @@
-
 "use strict";
 
 /** In-memory throttling service used by Host action boundaries. */

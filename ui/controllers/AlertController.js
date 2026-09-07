@@ -1,4 +1,3 @@
-
 "use strict";
 
 import { DomUtils } from "../utilities/DomUtils.js";

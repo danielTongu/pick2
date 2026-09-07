@@ -1,4 +1,3 @@
-
 "use strict";
 
 import { CardSortUtils } from "../../core/CardSortUtils.js";

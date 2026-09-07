@@ -1,4 +1,3 @@
-
 "use strict";
 
 import { Serializable } from "./Serializable.js";
