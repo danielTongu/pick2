@@ -184,7 +184,7 @@
 
 #registration {
     border: 1px solid var(--line);
-    --dark-green: color-mix(in srgb, var(--light-green) 7%, var(--black));;
+    --dark-green: color-mix(in srgb, var(--light-green) 9%, var(--black));;
     background: var(--dark-green);
     box-shadow: var(--shadow);
 }
@@ -298,7 +298,6 @@ form > footer {
 
 #request-mode-control > label:has(input:checked) span {
     background: var(--green);
-    color: var(--light-green);
     box-shadow: none;
 }
 
@@ -430,7 +429,6 @@ form > footer {
 }
 
 #network-connection-message {
-    max-width: 520px;
     margin: 0;
     color: var(--gray);
     font-size: 17px;

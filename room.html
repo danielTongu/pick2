@@ -19,6 +19,7 @@
     <link rel="stylesheet" href="ui/styles/overlays.css">
 </head>
 <body data-page="room">
+
 <main class="site-shell">
     <header id="app-header">
         <h1>
@@ -34,7 +35,6 @@
             <span id="connection-status-label">Starting...</span>
         </aside>
     </header>
-
     <section id="room-view" aria-label="Room">
         <header id="room-header">
             <div class="table-container">
@@ -83,7 +83,6 @@
             </div>
         </article>
     </section>
-
     <details id="guide-section" open>
         <summary id="guide-header">
             <b>Room guide</b>
@@ -118,6 +117,7 @@
                     <article><b>Joker</b><span>Stacks or adds a four-card draw penalty.</span><div class="playing-card-area" id="jokers"></div></article>
                     <article><b>Ace of spades</b><span>Plays on any card and blocks a draw penalty.</span><div class="playing-card-area" id="ace-of-spades"></div></article>
                     <article><b>Seven of hearts</b><span>Ends the game immediately and triggers scoring.</span><div class="playing-card-area" id="seven-of-hearts"></div></article>
+                    <article><!--purposely empty for balance--></article>
                 </div>
             </details>
             <details>
@@ -140,13 +140,13 @@
                         <tr><td>Seven of hearts</td><td data-card-value="7" data-card-suit="hearts">30</td></tr>
                         <tr><td>Joker</td><td data-card-value="joker" data-card-suit="red">40</td></tr>
                         <tr><td>Ace of spades</td><td data-card-value="a" data-card-suit="spades">50</td></tr>
+                        <tr><td></td><!--purposely empty for balance--><td></td></tr>
                         </tbody>
                     </table>
                 </div>
             </details>
         </div>
     </details>
-
     <footer id="app-footer">
         <div id="app-footer-brand">
             <strong>Pick 2</strong>
@@ -174,7 +174,6 @@
         <button id="alert-ok-button">OK</button>
     </div>
 </aside>
-
 <aside id="countdown-dialog" class="dialog-overlay" aria-labelledby="countdown-title" aria-describedby="countdown-description" hidden>
     <div class="dialog-panel">
         <header>
@@ -185,7 +184,6 @@
         <button id="countdown-ok-button">OK</button>
     </div>
 </aside>
-
 <aside id="suit-selection-dialog" class="dialog-overlay"  aria-labelledby="suit-selection-title" aria-describedby="suit-selection-description" hidden>
     <div class="dialog-panel">
         <header>
@@ -205,7 +203,6 @@
         </footer>
     </div>
 </aside>
-
 <aside id="results-dialog" class="dialog-overlay" aria-labelledby="results-message" hidden>
     <div class="dialog-panel dialog-panel-large">
         <header>
