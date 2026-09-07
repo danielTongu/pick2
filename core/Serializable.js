@@ -7,7 +7,7 @@ export class Serializable {
     /**
      * Creates a model instance.
      *
-     * @param {Object} data - Initial model data.
+     * @param {Object} [data] - Optional initial model data.
      */
     constructor(data) {
         if (data !== undefined) {

@@ -12,9 +12,6 @@ import { ValidationUtils } from "./ValidationUtils.js";
  * Represents a game player.
  */
 export class Player extends Serializable {
-    /** @type {*} */
-    #webSocket = null;
-
     /** @type {Function|null} */
     #idleHandler = null;
 
@@ -25,10 +22,9 @@ export class Player extends Serializable {
      * Creates a player.
      *
      * @param {string} name - Player display name.
-     * @param {*} ws - WebSocket connection.
      * @throws {Error}
      */
-    constructor(name, ws = null) {
+    constructor(name) {
         super();
 
         this.name = Player.normalizeName(name);
@@ -43,8 +39,6 @@ export class Player extends Serializable {
 
         this.nextKey = this.key;
         this.prevKey = this.key;
-
-        this.#webSocket = ws;
     }
 
     /**
@@ -76,24 +70,6 @@ export class Player extends Serializable {
             .replace(/[^\p{L}\p{N}_-]/gu, "");
     }
 
-
-    /**
-     * Gets this player's websocket.
-     *
-     * @returns {*} WebSocket connection.
-     */
-    get ws() {
-        return this.#webSocket;
-    }
-
-    /**
-     * Sets this player's websocket.
-     *
-     * @param {*} ws - WebSocket connection.
-     */
-    set ws(ws) {
-        this.#webSocket = ws ?? null;
-    }
 
     /**
      * Sets idle callback.
@@ -199,7 +175,7 @@ export class BotPlayer extends Player {
      * @throws {Error}
      */
     constructor(name) {
-        super(name, null);
+        super(name);
     }
 
     /**
