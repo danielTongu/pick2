@@ -172,10 +172,8 @@ export class HomeController extends ViewController {
             this.#renderEmptyGameMessage();
         }
 
-        DomUtils.require("#join-mode-input", HTMLInputElement).disabled =
-            this.#capabilities.join !== true;
-        DomUtils.require("#create-mode-input", HTMLInputElement).disabled =
-            this.#capabilities.create !== true;
+        DomUtils.require("#join-mode-input", HTMLInputElement).disabled = this.#capabilities.join !== true;
+        DomUtils.require("#create-mode-input", HTMLInputElement).disabled = this.#capabilities.create !== true;
     }
 
     /** Renders the empty registry row. */
@@ -194,36 +192,44 @@ export class HomeController extends ViewController {
         const isNetwork = this.#networkModeInput.checked;
         const modeLabel = isNetwork ? "Network" : "Local";
         const connectionState = this.#connectionStatus.dataset.status ?? "connecting";
+
         const statusLabel = {
             connecting: "connecting",
             connected: "connected",
             disconnected: "disconnected",
             error: "connection error"
         }[connectionState] ?? "status unknown";
-        this.#connectionStatus.setAttribute(
-            "aria-label",
-            `Connection mode. ${modeLabel} ${statusLabel}.`
-        );
+
+        this.#connectionStatus.setAttribute("aria-label", `Connection mode. ${modeLabel} ${statusLabel}.`);
     }
 
     /** Submits create or join room intent. */
     #submitRegistration() {
-        const playerName = ValidationUtils.optionalString(
-            this.#playerNameInput.value,
-            ""
-        );
-        const roomName = ValidationUtils.optionalString(this.#roomNameInput.value, "");
-        const modeInput = document.querySelector("input[name='registration-mode']:checked");
-        const registrationMode = modeInput instanceof HTMLInputElement ? modeInput.value : "create";
+        let playerName;
+        let roomName;
 
-        if (!playerName || !roomName) {
+        try {
+            playerName = ValidationUtils.namedString(
+                this.#playerNameInput.value,
+                "Player name",
+                ValidationUtils.playerNameMaxLength
+            );
+            roomName = ValidationUtils.namedString(
+                this.#roomNameInput.value,
+                "Room name",
+                ValidationUtils.roomNameMaxLength
+            );
+        } catch (error) {
             this.handleNotification({
                 status: Constants.STATUS.WARNING,
-                title: "Missing fields",
-                message: "Player and room are required."
+                title: "Invalid name",
+                message: error.message
             });
             return;
         }
+
+        const modeInput = document.querySelector("input[name='registration-mode']:checked");
+        const registrationMode = modeInput instanceof HTMLInputElement ? modeInput.value : "create";
 
         const isGameListed = this.#isGameListed(roomName);
 
@@ -245,9 +251,8 @@ export class HomeController extends ViewController {
             return;
         }
 
-        const action = registrationMode === "join"
-            ? Constants.ACTIONS.JOIN
-            : Constants.ACTIONS.CREATE;
+        const action = registrationMode === "join" ? Constants.ACTIONS.JOIN : Constants.ACTIONS.CREATE;
+
         const data = {
             roomName,
             playerName,

@@ -8,6 +8,7 @@ import { Serializable } from "./Serializable.js";
 import { BotPlayer, Player } from "./Player.js";
 import { PlayerCircle } from "./PlayerCircle.js";
 import { TurnUtils } from "./TurnUtils.js";
+import { ValidationUtils } from "./ValidationUtils.js";
 
 /**
  * Owns one room and enforces the card-game rules within it.
@@ -302,8 +303,7 @@ export class Room extends Serializable {
 
         for (const player of this.circle.players.values()) {
             const isHumanPlayer = !(player instanceof BotPlayer);
-            const isTrackedTurn = !isTrackingOnlyTurnOwner ||
-                TurnUtils.isTurnOwner(this.circle.turnOwnerKey, player.key);
+            const isTrackedTurn = !isTrackingOnlyTurnOwner || TurnUtils.isTurnOwner(this.circle.turnOwnerKey, player.key);
             const shouldTrack = isHumanPlayer && isTrackedTurn;
 
             if (shouldTrack) {
@@ -688,9 +688,7 @@ export class Room extends Serializable {
                     const remainingDrawAllowance = Math.max(0, player.drawAllowance);
 
                     if (remainingDrawAllowance > 0) {
-                        drawnCards.push(...this.#drawCardsForPlayer(
-                            player, remainingDrawAllowance
-                        ));
+                        drawnCards.push(...this.#drawCardsForPlayer(player, remainingDrawAllowance));
                     }
 
                     player.drawAllowance = 0;
@@ -922,9 +920,7 @@ export class Room extends Serializable {
      * @returns {boolean} True when the player exists.
      */
     isPlayerPresent(nameOrKey) {
-        return this.circle.players.has(
-            Player.normalizeKey(nameOrKey)
-        );
+        return this.circle.players.has(Player.normalizeKey(nameOrKey));
     }
 
     /**
@@ -951,17 +947,7 @@ export class Room extends Serializable {
      * @throws {Error}
      */
     static #normalizeRoomName(value) {
-        if (typeof value !== "string") {
-            throw new Error("Room name must be a string.");
-        }
-
-        const name = value.trim();
-
-        if (name.length === 0) {
-            throw new UserNotification("Room name cannot be empty.");
-        }
-
-        return name;
+        return ValidationUtils.namedString(value, "Room name", ValidationUtils.roomNameMaxLength);
     }
 
     /**

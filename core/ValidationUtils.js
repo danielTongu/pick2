@@ -1,9 +1,49 @@
 "use strict";
 
+import { UserNotification } from "./UserNotification.js";
+
 /**
  * Shared validation, assertion, and value-normalization helpers.
  */
 export class ValidationUtils {
+    /** Names must contain words separated only by spaces, apostrophes, or hyphens. */
+    static namePattern = /^[\p{L}\p{N}]+(?:[ '\u2019-][\p{L}\p{N}]+)*$/u;
+
+    /** @type {number} */
+    static playerNameMaxLength = 24;
+
+    /** @type {number} */
+    static roomNameMaxLength = 48;
+
+    /**
+     * Normalizes a player or room name.
+     *
+     * @param {*} value - Raw name.
+     * @param {string} label - Error label.
+     * @param {number} maxLength - Maximum character length.
+     * @returns {string} Normalized name.
+     * @throws {UserNotification}
+     */
+    static namedString(value, label, maxLength) {
+        if (typeof value !== "string") {
+            throw new UserNotification(`${label} must be a string.`);
+        }
+
+        const name = value.trim();
+
+        if (!name) {
+            throw new UserNotification(`${label} cannot be empty.`);
+        }
+
+        if (name.length < 2 || name.length > maxLength || !this.namePattern.test(name)) {
+            throw new UserNotification(
+                `${label} must be 2-${maxLength} characters using letters, numbers, spaces, apostrophes, or hyphens.`
+            );
+        }
+
+        return name;
+    }
+
     /**
      * Asserts that a value is an instance of a constructor.
      *

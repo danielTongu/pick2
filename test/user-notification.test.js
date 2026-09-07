@@ -8,6 +8,25 @@ import { Deck } from "../core/Deck.js";
 import { Player } from "../core/Player.js";
 import { Room } from "../core/Room.js";
 import { UserNotification } from "../core/UserNotification.js";
+import { ValidationUtils } from "../core/ValidationUtils.js";
+
+test("named strings accept readable names and reject unsupported characters", () => {
+    assert.equal(
+        ValidationUtils.namedString("  Saoirse O'Connor  ", "Player name", 24),
+        "Saoirse O'Connor"
+    );
+    assert.equal(
+        ValidationUtils.namedString("Été-2026", "Room name", 48),
+        "Été-2026"
+    );
+
+    for (const value of ["", "a", "!!!", "Room__", "two  spaces", "Room/7", "Room."]) {
+        assert.throws(
+            () => ValidationUtils.namedString(value, "Room name", 48),
+            UserNotification
+        );
+    }
+});
 
 test("actionable player and game-rule failures use UserNotification", async () => {
     assert.throws(() => new Player(""), UserNotification);

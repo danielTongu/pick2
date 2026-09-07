@@ -18,7 +18,7 @@ function stopIdleMonitoring(room) {
 }
 
 async function createPlayingSession(t, playerNames = ["Alice", "Bob", "Casey"]) {
-    const room = new Room(`Rules ${Math.random()}`, playerNames.length);
+    const room = new Room(`Rules ${Math.floor(Math.random() * 1000000)}`, playerNames.length);
     t.after(() => stopIdleMonitoring(room));
 
     for (const name of playerNames) {

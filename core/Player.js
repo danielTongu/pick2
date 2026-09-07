@@ -6,6 +6,7 @@ import { Hand } from "./Hand.js";
 import { UserNotification } from "./UserNotification.js";
 import { Serializable } from "./Serializable.js";
 import { TurnUtils } from "./TurnUtils.js";
+import { ValidationUtils } from "./ValidationUtils.js";
 
 /**
  * Represents a game player.
@@ -54,17 +55,11 @@ export class Player extends Serializable {
      * @throws {Error}
      */
     static normalizeName(value) {
-        if (typeof value !== "string") {
-            throw new Error("Player name must be a string.");
-        }
-
-        const name = value.trim();
-
-        if (!name) {
-            throw new UserNotification("Player name cannot be empty.");
-        }
-
-        return name;
+        return ValidationUtils.namedString(
+            value,
+            "Player name",
+            ValidationUtils.playerNameMaxLength
+        );
     }
 
     /**
@@ -75,10 +70,10 @@ export class Player extends Serializable {
      * @throws {Error}
      */
     static normalizeKey(value) {
-        return Player.normalizeName(value)
+        return ValidationUtils.requiredString(value, "Player name")
             .toLowerCase()
             .replace(/\s+/g, "-")
-            .replace(/[^a-z0-9_-]/g, "");
+            .replace(/[^\p{L}\p{N}_-]/gu, "");
     }
 
 
