@@ -215,7 +215,7 @@ test("application source uses explicit, named control flow", () => {
 });
 
 test("Local and Network modes share one Home page and one Room page", () => {
-    const homeHtml = readFileSync(new URL("../room.html", import.meta.url), "utf8");
+    const homeHtml = readFileSync(new URL("../index.html", import.meta.url), "utf8");
     const gameHtml = readFileSync(new URL("../room.html", import.meta.url), "utf8");
     const main = readFileSync(new URL("../src/main.js", import.meta.url), "utf8");
     const network = readFileSync(new URL("../src/runtime/Network.js", import.meta.url), "utf8");
@@ -225,6 +225,7 @@ test("Local and Network modes share one Home page and one Room page", () => {
     );
 
     assert.match(homeHtml, /<body data-page="home">/);
+    assert.match(homeHtml, /<meta name="pick-2-shared-root" content="\.\/ui\/">/);
     assert.match(homeHtml, /id="registration-form"/);
     assert.match(homeHtml, /id="list-table-body"/);
     const sharedHeaderPattern = /<header id="app-header">\s*<h1>\s*<a id="app-home-link"[\s\S]*?<span class="brand-mark"[\s\S]*?<span class="brand-copy">[\s\S]*?<\/h1>\s*<aside id="connection-status"/;
@@ -248,6 +249,7 @@ test("Local and Network modes share one Home page and one Room page", () => {
     assert.match(homeHtml, /<tbody id="list-table-body">[\s\S]*?class="empty-row"/);
     assert.doesNotMatch(homeHtml, /id="guide-section"/);
     assert.match(gameHtml, /<body data-page="room">/);
+    assert.match(gameHtml, /<meta name="pick-2-shared-root" content="\.\/ui\/">/);
     assert.match(homeHtml, /<article id="network-connection-view"[^>]+hidden>/);
     assert.match(gameHtml, /id="play-area"[^>]+data-status="waiting"[^>]+data-is-player-view="false"/);
     assert.match(gameHtml, /id="player-area"[^>]+data-is-turn-owner="false"[^>]+data-is-winner="false"/);
