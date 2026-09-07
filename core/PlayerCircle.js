@@ -15,8 +15,6 @@ export class PlayerCircle extends Serializable {
     constructor() {
         super();
 
-        const now = Date.now();
-
         /** @type {Map<string, Player>} */
         this.players = new Map();
 
@@ -32,22 +30,6 @@ export class PlayerCircle extends Serializable {
         /** @type {number} */
         this.direction = 1;
 
-        /** @type {number} */
-        this.createdAt = now;
-
-        /** @type {number} */
-        this.lastActiveAt = now;
-    }
-
-    /**
-     * Updates last active timestamp.
-     *
-     * @returns {number} Last active timestamp.
-     */
-    #recordActivity() {
-        this.lastActiveAt = Date.now();
-
-        return this.lastActiveAt;
     }
 
     /**
@@ -128,8 +110,6 @@ export class PlayerCircle extends Serializable {
             this.#appendPlayer(player);
         }
 
-        this.#recordActivity();
-
         return player;
     }
 
@@ -150,8 +130,6 @@ export class PlayerCircle extends Serializable {
             this.#unlinkPlayerFromCircle(player);
             this.players.delete(key);
         }
-
-        this.#recordActivity();
 
         return player;
     }
@@ -175,7 +153,6 @@ export class PlayerCircle extends Serializable {
             this.turnOwnerKey = key;
         }
 
-        this.#recordActivity();
     }
 
     /**
@@ -196,7 +173,6 @@ export class PlayerCircle extends Serializable {
             if (player !== null) {
                 this.turnOwnerKey = player.key;
                 isMoved = true;
-                this.#recordActivity();
             }
         }
 
@@ -229,8 +205,6 @@ export class PlayerCircle extends Serializable {
      */
     reverseTurnDirection() {
         this.direction *= -1;
-        this.#recordActivity();
-
         return this.direction;
     }
 
@@ -245,7 +219,6 @@ export class PlayerCircle extends Serializable {
             player.reset();
         }
 
-        this.#recordActivity();
     }
 
     /**
@@ -314,9 +287,7 @@ export class PlayerCircle extends Serializable {
      *     players:Object[],
      *     playerCount:number,
      *     turnOwnerKey:string|null,
-     *     direction:number,
-     *     createdAt:number,
-     *     lastActiveAt:number
+     *     direction:number
      * }} JSON-safe circle state.
      */
     toJSON() {
@@ -330,9 +301,7 @@ export class PlayerCircle extends Serializable {
             players,
             playerCount: this.players.size,
             turnOwnerKey: this.turnOwnerKey,
-            direction: this.direction,
-            createdAt: this.createdAt,
-            lastActiveAt: this.lastActiveAt
+            direction: this.direction
         };
     }
 

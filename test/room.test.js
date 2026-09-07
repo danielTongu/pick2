@@ -94,6 +94,27 @@ test("a viewer can join the room as a player", async (t) => {
     await assert.rejects(room.join("Bob", false, "missing"), /Viewer not found/);
 });
 
+test("player activity belongs to the player and room, not the circle", async (t) => {
+    const room = new Room("Activity Game", 2);
+    t.after(() => stopIdleMonitoring(room));
+
+    const alice = await room.join("Alice");
+    await room.join("Bob");
+    room.status = Constants.STATUS.PLAYING;
+    room.circle.setTurnOwner(alice.key);
+    alice.hand.draw(new Card(Constants.CARD.VALUE.FIVE.id, Constants.CARD.SUIT.HEARTS));
+    room.discardPile = [new Card(Constants.CARD.VALUE.FIVE.id, Constants.CARD.SUIT.CLUBS)];
+    alice.lastActiveAt = 0;
+    room.lastActiveAt = 0;
+
+    await room.discardCard("Alice", Constants.CARD.VALUE.FIVE.id, Constants.CARD.SUIT.HEARTS);
+
+    assert.equal(alice.lastActiveAt > 0, true);
+    assert.equal(room.lastActiveAt > 0, true);
+    assert.equal(Object.hasOwn(room.circle.toJSON(), "lastActiveAt"), false);
+    assert.equal(Object.hasOwn(room.circle.toJSON(), "createdAt"), false);
+});
+
 test("rooms support viewing, idle-player removal, and leaving", async (t) => {
     const room = new Room("Transitions", 3);
     t.after(() => stopIdleMonitoring(room));

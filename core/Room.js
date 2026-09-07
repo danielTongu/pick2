@@ -695,6 +695,7 @@ export class Room extends Serializable {
                     this.#advanceTurn(1, 1);
                 }
 
+                player.recordActivity();
                 this.#recordActivity();
                 this.#refreshPlayerIdleMonitoring();
                 this.#notifyStateChange();
@@ -727,6 +728,7 @@ export class Room extends Serializable {
                 this.#assertCardIsPlayable(card);
 
                 this.#applyDiscard(player, card);
+                player.recordActivity();
 
                 this.#recordActivity();
                 this.#refreshPlayerIdleMonitoring();
@@ -899,11 +901,13 @@ export class Room extends Serializable {
                     throw new UserNotification("No suit pending declaration.");
                 }
 
+                const player = this.circle.requireTurnOwner();
                 this.declaredSuit = Room.normalizeSuit(suit);
                 this.isAwaitingSuit = false;
                 this.status = Constants.STATUS.PLAYING;
 
                 this.#advanceTurn(1, 1);
+                player.recordActivity();
                 this.#recordActivity();
                 this.#refreshPlayerIdleMonitoring();
                 this.#notifyStateChange();
